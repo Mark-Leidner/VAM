@@ -1,0 +1,35 @@
+#	Linux 64-bit Makefile
+MACHINE		=	x86_64
+SYS_DEF		= 	-lm
+FORTRAN_MAKE	= 	yes	
+CC              =       pgcc
+
+#	Edit the next line and point to the location of HDF library version 
+#	4.0 or higher
+#	This packet will not compile unless you have HDF 4.0 or Higher
+
+########################################################################
+# NOTE!!!!!!!!	CHANGE this directories to reflect your environment 
+########################################################################
+
+HDFDIR	= /burst/p651a/hdf/HDF4.2r1/NewHDF
+HDFINC	= /burst/p651a/hdf/HDF4.2r1/NewHDF/include
+SHELLLIB = lib
+
+########################################################################
+#  NOTE!!!!!	Do not change below
+########################################################################
+
+all:
+	cd hdfshell; make MACHINE=$(MACHINE) SYS_DEF=$(SYS_DEF) \
+	HDFDIR=$(HDFDIR)  HDFINC=$(HDFINC) CC=$(CC) SHELLLIB=$(SHELLLIB) \
+        -f Makefile.linux64
+	@echo "	"
+	@echo "	###########################################"
+	@echo "	NSCATHDF (HDFSHELL) library compiled sucessful"
+	@echo "	###########################################"
+	@echo "	"
+clean:
+	cd hdfshell; make clean
+
+

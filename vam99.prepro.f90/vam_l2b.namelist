@@ -1,0 +1,64 @@
+Grid restore
+ &gridops vprint=.TRUE.,
+ background_fname='temp_native',
+   copyback=T,
+   analysis_name='F_Guess', background_name='F_Guess' /
+ &grid   details=.FALSE., DELX=1, DELY=1,
+  XMIN=0, XMAX=360, YMIN=-85, YMAX=85 /
+grid : save
+ &gridops save_fname='background1'/
+ &grid / 
+OBS
+ &vamobs vprint=.TRUE.,read_obs=.T.,qc_obs=.F.,write_obs=.T.,
+  filename = 'obs',outdir='bg-',more=.T./
+ &vamobs vprint=.TRUE.,read_obs=.F.,qc_obs=.T.,write_obs=.T.,
+  filename = 'obs',outdir='dual-bg-',more=.F./
+ &qcamb dualqc=.T., nalias=2 /
+CALCULATE
+ &input
+ minimize =  F,
+ eps =  0.0001,
+ maxfn =             1,
+ lamda =  1, 0, 5, 0, 1, 4, 1, 16, 0, 0, 0
+ lscale =  1.E-10, 1., 1., 1., 1.E+10, 1., 1., 1.E+08, 1., 1., 1.
+ &end
+CALCULATE
+ &input
+ minimize =  T,
+ eps =  0.0001,
+ maxfn =          50,
+ lamda =  1, 0, 5, 0, 1, 4, 1, 16, 0, 0, 0
+ lscale =  1.E-10, 1., 1., 1., 1.E+10, 1., 1., 1.E+08, 1., 1., 1.
+ &end
+grid : save
+ &gridops analysis_name='analysis1', save_fname='analysis1'/
+ &grid / 
+OBS
+ &vamobs vprint=.TRUE.,read_obs=.F.,qc_obs=.F.,write_obs=.T.,
+  filename = 'obs',outdir='dual-anal1-',more=.F./
+OBS
+ &vamobs vprint=.TRUE.,read_obs=.T.,qc_obs=.F.,write_obs=.T.,
+  filename = 'obs',outdir='anal1-',more=.F./
+CALCULATE
+ &input
+ minimize =  F,
+ eps =  0.0001,
+ maxfn =             1,
+ lamda =  1, 0, 5, 0, 1, 4, 1, 16, 0, 0, 0
+ lscale =  1.E-10, 1., 1., 1., 1.E+10, 1., 1., 1.E+08, 1., 1., 1.
+ &end
+CALCULATE
+ &input
+ minimize =  T,
+ eps =  0.01,
+ maxfn =          1000,
+ lamda =  1, 0, 5, 0, 1, 4, 1, 16, 0, 0, 0
+ lscale =  1.E-10, 1., 1., 1., 1.E+10, 1., 1., 1.E+08, 1., 1., 1.
+ &end
+grid : save
+ &gridops analysis_name='analysis2', save_fname='analysis2'/
+ &grid / 
+OBS
+ &vamobs vprint=.TRUE.,read_obs=.F.,qc_obs=.F.,write_obs=.T.,
+  filename = 'obs',outdir='anal2-',more=.F./
+END

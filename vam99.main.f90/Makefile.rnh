@@ -1,0 +1,84 @@
+
+#Fortran options
+FFLAGS = -w -03
+
+dotdot = /home/burst/nwp/stanr/ns90
+
+LDFLAGS   = -g \
+            -L$(dotdot)/minimize.f90dir \
+            -L$(dotdot)/fft.f90dir \
+            -lmin -lfft
+
+SYS_DEF   = -lnsl -lm
+
+# these will load in before libraries (06/03/98):
+
+MAINOBJ:=vam_main.o
+
+OBJ:=$(filter-out $(MAINOBJ), $(wildcard *.o))
+
+vam : $(MAINOBJ) $(OBJ)
+	f90 $(MAINOBJ) $(OBJ) $(LDFLAGS) $(SYS_DEF) -o $@
+
+uvinterp.F: uvinterp.for
+bidim.F: bidim.for
+
+interp_mod.f: interp_mod.F uvinterp.F bidim.F
+	f90 -F $<
+
+%.o: %.f
+	f90 -O3 -c $<
+
+history: vam namelist
+	./vam <namelist >history
+
+diffs: history history.old
+	-diff history history.old > hdiffs
+	@echo 'Differences:'
+	@wc -l hdiffs 
+
+ffiles = cgr_mod.f constants.f grid_mod.f grid_ops.f \
+	jb_mod.f sldta_mod.f solve_mod.f ssback_mod.f test_mod.f \
+	types.f vam_grid_mod.f vam_main.f vam_obs_mod.f
+Ffiles =interp_mod.F
+forfiles = bidim.for uvinterp.for
+
+checkpoint: history.old $(ffiles) $(Ffiles) $(forfiles)
+	ci -l -tRcsInfo $?
+	touch checkpoint
+
+cleanit:
+	rm vam *.o *.T *.M 
+	rm interp_mod.f bidim*.f bidim*.F uvinterp*.f uvinterp*.F
+
+bin_dir:= /home/nwp/NWP/bin
+#Emacs lisp code will be loaded from file:
+elisp = /home/nwp/rnh/elisp/adjoint.elc
+#Include rules for fortran libraries and adjoint codes:
+make-adjoint = $(bin_dir)/make-adjoint
+include $(make-adjoint)
+
+# auxilary files which self extract from this make file
+auxilary_files = RcsInfo
+
+$(auxilary_files): %: Makefile
+# Extract the file from the Makefile
+	@sed -n 's/#$@: //p' $^ > $@
+
+# These lines are stored in the RCS/*,v files and are seen when using rlog.
+#RcsInfo: NSCAT and SeaWinds Scatterometer f90 code for vam99.
+#RcsInfo: The scatterometer projects (AER P145,P495,P651,P725) are funded 
+#RcsInfo: by NASA through JPL and OSU.
+
+# The following lines created by running perl makef90depends.perl:
+cgr_mod.o: constants.o grid_mod.o interp_mod.o sldta_mod.o ssback_mod.o \
+	types.o
+interp_mod.o: constants.o grid_ops.o
+jb_mod.o: constants.o types.o
+sldta_mod.o: grid_mod.o interp_mod.o types.o
+solve_mod.o: cgr_mod.o constants.o grid_mod.o types.o
+ssback_mod.o: grid_mod.o interp_mod.o jb_mod.o types.o
+test_mod.o: constants.o grid_mod.o interp_mod.o sldta_mod.o
+vam_grid_mod.o: cgr_mod.o constants.o grid_mod.o grid_ops.o interp_mod.o \
+	solve_mod.o ssback_mod.o
+vam_main.o: solve_mod.o test_mod.o vam_grid_mod.o vam_obs_mod.o

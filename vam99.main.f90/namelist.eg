@@ -1,0 +1,86 @@
+OBS DATA
+This is the prototype namelist data set for the REASON CAN project.
+Note that three grid resolutions and 5 QC steps are used.
+We will treat scatterometer data as conventional data by setting obs type
+in the data set headers.
+Read in all the data
+ &vamobs filename='conventional', read_obs=T, vprint=T, more=T/
+ &vamobs filename='atlas', read_obs=T, vprint=T, more=T/
+ &vamobs filename='ssmi.am', read_obs=T, vprint=T, more=T/
+ &vamobs filename='ssmi.noon', read_obs=T, vprint=T, more=T/
+ &vamobs filename='ssmi.pm', read_obs=T, vprint=T, more=T/
+ &vamobs filename='trmm', read_obs=T, vprint=T, more=T/
+ &vamobs filename='amsr.e', read_obs=T, vprint=T, more=T/
+ &vamobs filename='amsr', read_obs=T, vprint=T, more=T/
+ &vamobs filename='windsat', read_obs=T, vprint=T, more=T/
+ &vamobs filename='ers1', read_obs=T, vprint=T, more=T/
+ &vamobs filename='ers2', read_obs=T, vprint=T, more=T/
+ &vamobs filename='nscat', read_obs=T, vprint=T, more=T/
+ &vamobs filename='quikscat', read_obs=T, vprint=T, more=T/
+ &vamobs filename='seawinds', read_obs=T, vprint=T/
+FGAT
+Use a coarse (1 x 1) grid here
+ &interp dates = <yyyymmdd-6>, <yyyymmdd>, <yyyymmdd+6>,
+         times = <hhmmss-6>, <hhmmss>, <hhmmss+6>/
+ &gridops background_fname='bgd1', copyback=T, vprint=T,
+         idate = 0/ force a check
+ &grid ymin=-78, ymax=78, delx=1, dely=1/
+ &gridops background_fname='bgd3', copyback=T, vprint=T,
+         idate = <yyyymmdd+6>, itime = <hhmmss+6>/ finesse check
+ &grid/
+ &gridops background_fname='bgd2', copyback=T, vprint=T, idate = 0/
+ &grid/
+OBS QC
+Background check (QC pass 1)
+ &vamobs qc_obs=T, vprint=T/
+ &qcobs gamma=0.8,0.8,60/ loose gamma here 
+CALCULATE
+Coarse solution
+ &input minimize=T, eps=0.0001,
+   lamda=1, 12, 12, 0, 1, 4, 1, 16, 0, 12, 0, 12, 12/
+OBS QC
+Coarse solution QC (QC pass 2)
+ &vamobs qc_obs=T, vprint=T/
+ &qcobs gamma=0.4,0.4,45/ tighter gamma here 
+GRID refinement 
+Refine to a medium (1/2 x 1/2) grid
+ &gridops vprint=T/
+ &grid delx=0.5, dely=0.5/
+CALCULATE
+Medium solution
+ &input minimize=T/
+OBS QC
+Medium solution QC (QC pass 3)
+ &vamobs qc_obs=T, vprint=T/
+ &qcobs/ 
+GRID refinement 
+Refine to a fine (1/4 x 1/4) grid
+ &gridops vprint=T/
+ &grid delx=0.25, dely=0.25/
+CALCULATE
+Fine solution
+ &input minimize=T/ 
+OBS QC
+Fine solution QC (QC pass 4)
+This is the last chance for data to be considered
+ &vamobs qc_obs=T, vprint=T/
+ &qcobs gamma=0.3,0.3,30/ strict gamma used here. 
+CALCULATE
+Final solution
+ &input minimize=T, maxfn=50/  Change lamdas here?!!
+OBS QC
+Final solution QC (QC pass 5)
+ &vamobs qc_obs=T, vprint=T/
+ &qcobs/
+OBS OUTPUT
+Save the observations with QC information and interpolated values
+This data set could be post processed to the Level 2.5 data set
+ &vamobs write_obs=T/
+GRID OUTPUT
+Save the final analysis.
+This is essentially the Level 3 data set,
+except that the header might need to be modified.
+ &gridops save_fname='analysis', gridstats=T/
+ &grid/ 
+END PROCESSING
+

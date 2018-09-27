@@ -1,0 +1,67 @@
+Grid restore
+ &gridops 
+ vprint=.TRUE.,
+ background_fname='temp_native',
+   copyback=T,
+   analysis_name='F_Guess', background_name='F_Guess' /
+ &grid   details=.FALSE., DELX=1, DELY=1,
+  XMIN=0, XMAX=360, YMIN=-85, YMAX=85 /
+Grid restore
+ &gridops 
+ vprint=.TRUE.,
+ save_fname='background1',
+   copyback=F,
+   analysis_name='F_Guess', background_name='F_Guess' /
+ &grid   /
+OBS
+ &vamobs vprint=.TRUE.,
+  filename = 'obs',
+  read_obs = .T., qc_obs = .F., write_obs = .F.,
+  more = .FALSE./
+OBS
+ &vamobs vprint=.TRUE.,
+  outdir = 'preqc-',
+  filename = 'obs',
+  read_obs = .F., qc_obs = .F., write_obs = .T.,
+  more = .FALSE./
+INITIALIZE
+ &s0init
+ filename = 'nscat1' ,
+ modfns = 6,
+ vprint = .TRUE. , jdebug = 0,
+ more = .FALSE. /
+CALCULATE
+ &input
+ minimize =  F,
+ eps =  0.0001,
+ maxfn =             1,
+ lamda =  1,       0,   0, 0,       1,  4,  1,     16, 1,  0, 0
+ lscale =  1.E-10, 1., 1., 1., 1.E+10, 1., 1., 1.E+08, 1., 1., 1.
+ &end
+OBS
+ &vamobs vprint=.TRUE.,
+  filename = 'obs',
+  read_obs = .F., qc_obs = .T., write_obs = .F.,
+  more = .FALSE./
+ &qcs0 jdebug=0, gamma=9. /
+OBS
+ &vamobs vprint=.TRUE.,
+  outdir = 'postqc-',
+  filename = 'obs',
+  read_obs = .F., qc_obs = .F., write_obs = .T.,
+  more = .FALSE./
+CALCULATE
+ &input
+ minimize =  T,
+ eps =  0.0001,
+ maxfn =      400,
+ lamda =  1,       0,   0, 0,       1,  4,  1,     16, 1,  0, 0
+ lscale =  1.E-10, 1., 1., 1., 1.E+10, 1., 1., 1.E+08, 1., 1., 1.
+ &end
+grid : save
+ &gridops 
+  save_fname='analysis',
+  vprint=.TRUE., gridstats=.T.  /
+ &grid / 
+END
+

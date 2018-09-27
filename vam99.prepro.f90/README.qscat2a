@@ -1,0 +1,42 @@
+
+$Id: README.qscat2a,v 1.1 1999/12/22 16:41:28 mcc Exp $
+$Log: README.qscat2a,v $
+Revision 1.1  1999/12/22 16:41:28  mcc
+Initial revision
+
+
+A Fortran77 reader for QuikScat Level 2A is available off the 
+web at url http://podaac.jpl.nasa.gov/quikscat/ or locally at 
+/cyan/quikscat/software/F77/read_qscat2a.f . A README file and
+a sample output file is located there as well, sample_output2a . 
+
+The read_qscat2a.f code was slightly modified and is called
+readqscat2a.f . The main differences are the modified code dumps
+output to ascii file 'qscat2a.out' and reads Level 2A in the 
+"eggs in their entirety" mode as opposed to "eggs in slabs" (original 
+unmodified code). The "eggs in their entirety" mode reads the entire 
+Level 2A file.
+
+Use Makefile.qscat2a to compile readqscat2a.f :
+
+gmake -f Makefile.qscat2a  .
+
+The /cyan/quikscat/software/F77/Makefile can be used to compile
+all /cyan/quikscat/software/F77/read_qscat*.f code with the
+necessary changes to the makefile. 
+
+To run readqscat2a executable, enter (for example):
+
+%> readqscat2a /cyan/quikscat/data/L2A/1999/239/QS_S2A00980.19992421832   .
+
+
+Similarly, a Level 2A IDL reader can be found off the web site or
+locally at /cyan/quikscat/software/IDL/read_qscat2a.pro . 
+
+This was also modified to read the entire dataset. The code
+creates an ascii output file,'qscat2a.out_idl' . To execute (for
+example): 
+
+IDL> readqscat2a,'/cyan/quikscat/data/L2A/1999/239/QS_S2A00980.19992421832'  .
+
+

@@ -1,0 +1,23 @@
+$Id: Readme,v 1.4 2000/03/28 17:24:12 trn Exp $
+This directory contains all f90 code for the VAM99 main routines,
+which includes all codes except the pre- and postprocessing routines.
+
+The following named revisions have been created:
+
+Build1: Version that uses linked list for observation data,
+  implemented for conventional data only, tested with 1obs case of the
+  initial revision.
+
+Build2: Working version with support for conventional and ambigous
+   winds.  Tested on canned CONV and NSCAT.25km.winds cases, and on
+   NSCAT and QUIKSCAT (HDF) winds.
+
+Build3: Updated vam_obs data file structure, revised gridops and vamobs namelists
+   some reorganization of modules, other stylistic changes.
+   Tested against Build2.
+
+Build4: Gridded file header changed to ASCII format, removed dependence on native
+   format codes.  Added support for sigma0 obs data.  Tested against
+   canned NSCAT.25km.sigma0 and  NSCAT.50km.sigma0 cases, and on
+   Quikscat (HDF) Level 2A data.
+

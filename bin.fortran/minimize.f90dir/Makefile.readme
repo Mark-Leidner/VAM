@@ -1,0 +1,9 @@
+Makefile was altered to compile on a SGI machine. 
+If you need to compile on a SUN, copy Makefile.sun
+to Makefile, perform clean_all, and compile. Do not
+commit a Makefile for the SUN to the CVS repository.
+This is a temporary fix until a top level, machine
+dependent Makefile is constructed. For further 
+information contact Mark Cerniglia at AER (mcc@aer.com).
+
+

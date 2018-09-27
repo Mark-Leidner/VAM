@@ -1,0 +1,1226 @@
+>(fset 'f10
+   [?\C-a ?\C-f ?\C-f ?\C-  ?\C-e ?\M-w ?\C-f ?\C-x ?o ?\M-> ?\C-y ?\C-x ?q return ?\C-x ?o])
+
+M-x R 
+Note: C-c C-v is for help or help.search('topic')
+
+> Sys.putenv("DISPLAY"=":0") # deprecated
+> Sys.setenv("DISPLAY"=":0") ; x11()
+> sanity<-par() ; date() ; options(width=120)
+> par(sanity)
+
+> ls(pattern="\\.vs\\.")
+> rm(list=ls(pattern="var\\.vs\\."))
+
+> ######################### Desroziers method #############################
+
+> xx<-matrix(scan('/Users/rhoffman/vam/R/wspdAMSRE2004Bad.txt',skip=4),ncol=4,byrow=T)
+> dimnames(xx)[[2]]<-c('dt','A','B','O')
+> apply(xx,2,range)
+       dt      A      B    O
+[1,] -180  0.976  1.082  0.8
+[2,]  174 32.848 23.049 31.2
+> par(mfrow=c(2,2))
+> hist(xx[,'dt'])
+> hist(xx[,'O'])
+> hist(xx[,'B'])
+> hist(xx[,'A'])
+> par(mfrow=c(2,2))
+> hist(xx[,'A']-xx[,'B'])
+> hist(xx[,'O']-xx[,'B'])
+> hist(xx[,'O']-xx[,'A'])
+> source('/Users/rhoffman/vam/R/plot.increments.q')
+> a<-xx[,'A']
+> b<-xx[,'B']
+> o<-xx[,'O']
+> plot.increments(a,b,o)
+> select<-abs(o-a)<2.5
+> plot.increments(a[select],b[select],o[select])
+> a<-normalize(xx[,'A'])
+> b<-normalize(xx[,'B'])
+> o<-normalize(xx[,'O'])
+> plot.increments(a,b,o)
+> a<-yy[,'A']
+> b<-yy[,'B']
+> o<-yy[,'O']
+> select<-yy[,'dt']>0
+> plot.increments(a[select],b[select],o[select])
+> plot.increments(a[!select],b[!select],o[!select])
+> 
+> ######################### 11/7/11 #############################
+
+> bad<-matrix(scan('/Users/rhoffman/vam/R/wspdAMSRE2004Bad.txt',skip=4),ncol=4,byrow=T)
+Read 1164 items
+> dimnames(bad)[[2]]<-c('dt','A','B','O')
+> good<-matrix(scan('/Users/rhoffman/vam/R/wspdAMSRE2004Good.txt',skip=4),ncol=4,byrow=T)
+Read 1344 items
+> dimnames(good)[[2]]<-c('dt','A','B','O')
+> apply(bad,2,range)
+       dt      A      B    O
+[1,] -180  0.976  1.082  0.8
+[2,]  174 32.848 23.049 31.2
+> apply(good,2,range)
+       dt      A      B    O
+[1,] -180  0.505  0.402  0.0
+[2,]  174 24.183 19.625 21.8
+> xx <- bad
+> apply(xx,2,range)
+       dt      A      B    O
+[1,] -180  0.976  1.082  0.8
+[2,]  174 32.848 23.049 31.2
+> a<-xx[,'A']
+> b<-xx[,'B']
+> o<-xx[,'O']
+> gamma<-(o-a)/(b-a)
+> par(mfrow=c(2,2))
+> hist(a)
+> hist(b)
+> hist(o)
+> hist(gamma)
+> select<-abs(gamma)<1
+> c(length(select),sum(select))
+[1] 291 189
+> hist(a[select])
+> hist(b[select])
+> hist(o[select])
+> hist(gamma[select])
+> hist(gamma[select])
+> hist((b-a)[select])
+
+> xx <- bad
+> a<-xx[,'A']
+> b<-xx[,'B']
+> o<-xx[,'O']
+> gamma<-(o-a)/(b-a)
+> select<-abs(gamma)<1
+> c(length(select),sum(select))
+[1] 291 189
+> delta<-0.25
+> gamma1<-(-0.25)
+> select<-(gamma>gamma1-delta) & (gamma<delta)
+> c(sum(select),length(select),length(gamma),range(gamma))
+[1]  98 291 291 -58 Inf
+> subtitle<-paste("Bad data, gamma1=", gamma1, ", delta=", delta, ", n=", sum(select),sep="")
+> par(mfcol=c(3,2))
+> plot.increments(a[select],b[select],o[select],subtitle)
+> xx <- good
+> a<-xx[,'A']
+> b<-xx[,'B']
+> o<-xx[,'O']
+> gamma<-(o-a)/(b-a)
+> select<-abs(gamma)<1
+> c(length(select),sum(select))
+[1] 336 247
+> select<-(gamma>gamma1-delta) & (gamma<delta)
+> c(sum(select),length(select),length(gamma),range(gamma))
+[1]  150.00  336.00  336.00 -186.25  570.00
+> subtitle<-paste("Good data, gamma1=", gamma1, ", delta=", delta, ", n=",sum(select), sep="")
+> plot.increments(a[select],b[select],o[select],subtitle)
+
+> xx <- bad
+> a<-xx[,'A']
+> b<-xx[,'B']
+> o<-xx[,'O']
+> gamma<-(o-a)/(b-a)
+> select<-rep(T,length(gamma))
+> c(sum(select),length(select),length(gamma),range(gamma))
+> par(mfcol=c(3,2))
+> subtitle<-paste("Bad data, no selection, n=",sum(select))
+> plot.increments(a[select],b[select],o[select],subtitle)
+> xx <- good
+> a<-xx[,'A']
+> b<-xx[,'B']
+> o<-xx[,'O']
+> gamma<-(o-a)/(b-a)
+> select<-rep(T,length(gamma))
+> c(sum(select),length(select),length(gamma),range(gamma))
+> subtitle<-paste("Good data, no selection, n=",sum(select))
+> plot.increments(a[select],b[select],o[select],subtitle)
+
+> calc.errors(good,delta=F)
+> calc.errors(good,delta=0.5)
+> calc.errors(good,delta=0.25)
+> calc.errors(good,delta=0.125)
+> calc.errors(good,delta=1/16)
+> calc.errors(bad,delta=F)
+> calc.errors(bad,delta=0.5)
+> calc.errors(bad,delta=0.25)
+> calc.errors(bad,delta=0.125)
+> calc.errors(bad,delta=1/16)
+data	StdDeviation	n	stdDev	biasC	delta	gamma1	
+good	Background	336	1.325	1.279	FALSE	-0.25
+good	Observation	336	0.865	0.829	FALSE	-0.25
+good	Analysis	336	0.431	0.381	FALSE	-0.25
+good	Background	202	1.504	1.449	0.5	-0.25
+good	Observation	202	0.539	0.503	0.5	-0.25
+good	Analysis	202	0.403	0.364	0.5	-0.25
+good	Background	150	1.65	1.577	0.25	-0.25
+good	Observation	150	0.562	0.525	0.25	-0.25
+good	Analysis	150	0.465	0.426	0.25	-0.25
+good	Background	122	1.65	1.59	0.125	-0.25
+good	Observation	122	0.564	0.536	0.125	-0.25
+good	Analysis	122	0.501	0.473	0.125	-0.25
+good	Background	94	1.705	1.647	0.0625	-0.25
+good	Observation	94	0.547	0.521	0.0625	-0.25
+good	Analysis	94	0.498	0.473	0.0625	-0.25
+bad	Background	291	1.439	1.283	FALSE	-0.25
+bad	Observation	291	1.112	1.099	FALSE	-0.25
+bad	Analysis	291	-1.411	-1.42	FALSE	-0.25
+bad	Background	146	1.82	1.684	0.5	-0.25
+bad	Observation	146	0.277	0.287	0.5	-0.25
+bad	Analysis	146	-0.534	-0.529	0.5	-0.25
+bad	Background	98	1.813	1.697	0.25	-0.25
+bad	Observation	98	0.648	0.616	0.25	-0.25
+bad	Analysis	98	0.539	0.504	0.25	-0.25
+bad	Background	71	1.988	1.829	0.125	-0.25
+bad	Observation	71	0.795	0.755	0.125	-0.25
+bad	Analysis	71	0.698	0.656	0.125	-0.25
+bad	Background	58	2.041	1.852	0.0625	-0.25
+bad	Observation	58	0.76	0.707	0.0625	-0.25
+bad	Analysis	58	0.676	0.621	0.0625	-0.25
+
+> ######################### 11/15-21/11 #############################
+
+> #### Define constants
+> dir<-'/Users/rhoffman/Desktop/P1326-NASA-OceanWinds/ErrorAnalysis/GoodBadData/'
+> year<-'2004'
+> platforms<-list(amsr="AMSRE",f13="F13",f14="F14",f15="F15",qscat="QSCAT")
+> columns<-c('date','time','dt','a','b','o')
+> good<-list(name='Good',year=year,latitude=42.4182,longitude=173.373)
+> bad<-list(name='Bad',year=year,latitude=41.9241,longitude=156.018)
+
+### Manipulate filenames
+> for (i in 1:length(platforms)) {
++ dataname<-paste('wspd',platforms[[i]],year,'Bad',sep='')
++ filename<-paste(dir,dataname,'.txt',sep='')
++ assign(dataname,matrix(scan(filename,skip=4),ncol=6,byrow=T,dimnames=list(NULL,columns)),envir = .GlobalEnv)}
++ cat ('File', i, 'is', filename, '.\n')}
++ cat(system(paste('ls -lag',filename)))}
+
+> daysInMonth<-c(jan=31,feb=29,mar=31,apr=30,may=31,jun=30,jul=31,aug=31,sep=30,oct=31,nov=30,dec=31)
+
+> ### Read files
+> source('/Users/rhoffman/vam/R/plot.gamma.q')
+> good$data<-readGoodBad('Good')
+> bad$data<-readGoodBad('Bad')
+
+> ### Gamma plots
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(3,1))
+> plotGoodBadGamma(good,maxGamma=5)
+> plotGoodBadGamma(bad,maxGamma=5)
+> par(mfrow=c(4,3))
+> for (i in 1:4) plotGoodBadGamma(good,nobsSelect=i,maxGamma=5)
+> for (i in 1:4) plotGoodBadGamma(bad,nobsSelect=i,maxGamma=5)
+> par(mfrow=c(5,3))
+> for (i in 1:5) plotGoodBadGamma(good,platformSelect=i,maxGamma=5)
+> for (i in 1:5) plotGoodBadGamma(bad,platformSelect=i,maxGamma=5)
+> par(mfrow=c(4,3))
+> for (i in 1:4) plotGoodBadGamma(good,nobsSelect=i,platformSelect=1,maxGamma=5)
+> for (i in 1:4) plotGoodBadGamma(bad,nobsSelect=i,platformSelect=1,maxGamma=5)
+> par(mfrow=c(4,3))
+> windThresholds<-c(0,5,10,15,20)
+> for (i in 1:4) plotGoodBadGamma(good,wind='o',windRange=windThresholds[i:(i+1)],maxGamma=5)
+> for (i in 1:4) plotGoodBadGamma(bad,wind='o',windRange=windThresholds[i:(i+1)],maxGamma=5)
+> for (i in 1:4) plotGoodBadGamma(good,wind='b',windRange=windThresholds[i:(i+1)],maxGamma=5)
+> for (i in 1:4) plotGoodBadGamma(bad,wind='b',windRange=windThresholds[i:(i+1)],maxGamma=5)
+> dev.off(dev.cur())
+> ### End
+
+> ### Plot deviations from means
+> dimnames(good$data)[[2]]
+> for (i in dimnames(good$data)[[2]]) assign(i,good$data[,i])
+> select<-abs(gamma)<2 & abs(gammabar)<2
+> for (i in dimnames(good$data)[[2]]) assign(i,good$data[select,i])
+> gammaCriticalRange<-c(-1/2,1/4)
+> plot(gammabar,gamma-gammabar,col=platform,pch=nobs)
+> abline(h=c(-.25,.25),v=gammaCriticalRange)
+> plot(dt,gamma-gammabar,col=platform,pch=nobs)
+> plot(dt-dtbar,gamma-gammabar,col=platform,pch=nobs)
+
+> ### Plot increment scatter plots
+> source('/Users/rhoffman/vam/R/plot.gamma.q')
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfcol=c(3,2))
+> plotGoodBadPairs(good)
+> plotGoodBadPairs(bad)
+> par(mfcol=c(3,2))
+> for (i in 1:5) {plotGoodBadPairs(good,platformSelect=i)
+> plotGoodBadPairs(bad,platformSelect=i)}
+> par(mfcol=c(3,2))
+> windThresholds<-c(0,5,10,15,20)
+> for (i in 1:4) {plotGoodBadPairs(good,wind='o',windRange=windThresholds[i:(i+1)])
+> plotGoodBadPairs(bad,wind='o',windRange=windThresholds[i:(i+1)])}
+> for (i in 1:4) {plotGoodBadPairs(good,wind='b',windRange=windThresholds[i:(i+1)])
+> plotGoodBadPairs(bad,wind='b',windRange=windThresholds[i:(i+1)])}
+> dev.off(dev.cur())
+> ### End
+ 
+> critAMB<-1
+> plotGoodBadGamma(bad)
+> plotGoodBadGamma(bad,wind='amb',windRange=c(critAMB,Inf))
+> plotGoodBadPairs(bad,platformSelect=1)
+> plotGoodBadPairs(bad,platformSelect=1,wind='amb',windRange=c(critAMB,Inf))
+
+> ### Select interesting cases
+> gs<-gamma.select(bad,platformSelect=1,wind='amb',windRange=c(0,0.1),nobsSelect=2,platforms=platforms)
+> gs$main
+[1] "AMSRE only, Nobs=2, 0<|A-B|<0.1"
+> bad$data[gs[[1]],]
+     platform   datetime   time   dt      a      b    o     gamma nobs dtbar   gammabar
+[1,]        1 2004021418  44.75 -180  9.406  9.377 10.0 -20.48276    2   -72 -10.254877  AMSRE only, Nobs=2, 0<|A-B|<0.1
+[2,]        1 2004031618  75.75 -126  3.047  2.991  3.6  -9.87500    2   -48  -6.048611  AMSRE only, Nobs=2, 0<|A-B|<0.1
+[3,]        1 2004032600  85.00  174 11.891 11.911 13.0  55.45000    2     3  25.381452  AMSRE only, Nobs=2, 0<|A-B|<0.1
+[4,]        1 2004042318 113.75 -162  9.779  9.858  8.0 -22.51899    2   -57 -11.318979  AMSRE only, Nobs=2, 0<|A-B|<0.1
+[5,]        1 2004052018 140.75 -180  9.587  9.507  8.8   9.83750    2   -63   4.384267  AMSRE only, Nobs=2, 0<|A-B|<0.1
+> gs<-gamma.select(bad,platformSelect=1,wind='o',windRange=c(20,Inf),nobsSelect=3,platforms=platforms)
+> c(length(gs[[1]]),sum(gs[[1]]))
+[1] 1978    7
+> gs$main
+[1] "AMSRE only, Nobs=3, 20<O<Inf"
+> bad$data[gs[[1]],]
+     platform   datetime   time   dt      a      b    o       gamma nobs dtbar    gammabar
+[1,]        1 2004022718  57.75 -114 27.131 19.888 24.6  0.34944084    3    48  0.14166922  AMSRE only, Nobs=3, 20<O<Inf
+[2,]        1 2004030518  64.75 -108 25.755 19.341 22.2  0.55425631    3    26  0.23372754  AMSRE only, Nobs=3, 20<O<Inf
+[3,]        1 2004032718  86.75 -144 26.744 20.431 22.8  0.62474259    3    22  0.10331204  AMSRE only, Nobs=3, 20<O<Inf
+[4,]        1 2004050218 122.75 -168 21.653 17.415 21.4  0.05969797    3     2  0.04945596  AMSRE only, Nobs=3, 20<O<Inf
+[5,]        1 2004112518 329.75 -114 18.444 17.519 21.0 -2.76324324    3    36 -0.54620809  AMSRE only, Nobs=3, 20<O<Inf
+[6,]        1 2004122400 358.00  120 16.130 14.721 20.4 -3.03051810    3   -28 -0.48363991  AMSRE only, Nobs=3, 20<O<Inf
+[7,]        1 2004123006 364.25 -180 19.869 16.714 26.2 -2.00665610    3    26  0.07154654  AMSRE only, Nobs=3, 20<O<Inf
+> gs<-gamma.select(bad,platformSelect=1,maxGamma=-1,gammaCriticalRange=c(1.75,2.25),nobsSelect=2,platforms=platforms)
+> c(length(gs[[1]]),sum(gs[[1]]))
+[1] 1978    2
+> gs$main
+[1] "AMSRE only, Nobs=2, 1.75<gamma<2.25"
+> bad$data[gs[[1]],]
+     platform   datetime   time   dt     a     b   o    gamma nobs dtbar   gammabar
+[1,]        1 2004010800   7.00  162 4.918 4.412 4.0 1.814229    2    78  0.7040477  AMSRE only, Nobs=2, 1.75<gamma<2.25
+[2,]        1 2004081418 226.75 -120 5.436 6.265 7.2 2.127865    2   -45 -0.4844546  AMSRE only, Nobs=2, 1.75<gamma<2.25
+> gs<-gamma.select(bad,platformSelect=1,maxGamma=-1,gammaCriticalRange=c(1.5,2.5),nobsSelect=1,platforms=platforms)
+> c(length(gs[[1]]),sum(gs[[1]]))
+[1] 1978    2
+> gs$main
+[1] "AMSRE only, Nobs=1, 1.5<gamma<2.5"
+> bad$data[gs[[1]],]
+     platform   datetime   time   dt      a      b    o    gamma nobs dtbar gammabar
+[1,]        1 2004052200 142.00  168 11.859 12.259 12.6 1.852500    1   168 1.852500  AMSRE only, Nobs=1, 1.5<gamma<2.5
+[2,]        1 2004101618 289.75 -162  5.287  6.903  8.8 2.173886    1  -162 2.173886  AMSRE only, Nobs=1, 1.5<gamma<2.5
+
+
+> gs<-gamma.select(bad,platformSelect=1,maxGamma=-1,gammaCriticalRange=c(1.85,2.15),nobsSelect=2,platforms=platforms)
+> c(length(gs[[1]]),sum(gs[[1]]))
+> gs$main
+> bad$data[gs[[1]],]
+> dev.off(dev.cur())
+> ### End
+
+> ### Plot selected cases
+> dates<-c(2004010800,2004021418,2004022718,2004030518,2004031618,2004032600,2004032718,2004042318,2004050218,2004052018,2004052200,2004081418,2004101618,2004112518,2004122400,2004123006)
+> cases<-c("AMSR only, Nobs=2, 1.75<gamma<2.25","AMSR only, Nobs=2, 0<|A-B|<0.1","AMSR only, Nobs=3, 20<O<Inf","AMSR only, Nobs=3, 20<O<Inf","AMSR only, Nobs=2, 0<|A-B|<0.1","AMSR only, Nobs=2, 0<|A-B|<0.1","AMSR only, Nobs=3, 20<O<Inf","AMSR only, Nobs=2, 0<|A-B|<0.1","AMSR only, Nobs=3, 20<O<Inf","AMSR only, Nobs=2, 0<|A-B|<0.1","AMSR only, Nobs=1, 1.5<gamma<2.5","AMSR only, Nobs=2, 1.75<gamma<2.25","AMSR only, Nobs=1, 1.5<gamma<2.5","AMSR only, Nobs=3, 20<O<Inf","AMSR only, Nobs=3, 20<O<Inf","AMSR only, Nobs=3, 20<O<Inf")
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(2,2))
+> for (i in 1:length(dates)) plotGoodBadCase(bad,dates[i],cases[i])
+> dev.off(dev.cur())
+> ### End
+
+> source('/Users/rhoffman/vam/R/plot.gamma.q')
+> source('/Users/rhoffman/vam/R/source.q')
+
+> source('source.q')
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfcol=c(2,2))
+> for (i in c(2,4,6,11)) plotGoodBadCase(bad,dates[i],cases[i])
+> dev.off(dev.cur())
+
+> datetime<-bad$data[,'datetime']
+> datetime<-unique(sort(datetime))
+> source('source.q')
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfcol=c(2,2))
+> for (i in datetime) plotGoodBadCase(bad,i)
+> dev.off(dev.cur())
+> VC<-unique(sort(avc))
+> cbind(datetime,VC)
+ 
+> source('/Users/rhoffman/vam/R/source.q')
+
+> ### aVC plots
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(3,1))
+> plotGoodBadVC(good)
+> plotGoodBadVC(bad)
+> par(mfrow=c(4,3))
+> for (i in 1:4) plotGoodBadVC(good,nobsSelect=i)
+> for (i in 1:4) plotGoodBadVC(bad,nobsSelect=i)
+> par(mfrow=c(5,3))
+> for (i in 1:5) plotGoodBadVC(good,platformSelect=i)
+> for (i in 1:5) plotGoodBadVC(bad,platformSelect=i)
+> par(mfrow=c(4,3))
+> for (i in 1:4) plotGoodBadVC(good,nobsSelect=i,platformSelect=1)
+> for (i in 1:4) plotGoodBadVC(bad,nobsSelect=i,platformSelect=1)
+> par(mfrow=c(4,3))
+> windThresholds<-c(0,5,10,15,20)
+> for (i in 1:4) plotGoodBadVC(good,wind='o',windRange=windThresholds[i:(i+1)])
+> for (i in 1:4) plotGoodBadVC(bad,wind='o',windRange=windThresholds[i:(i+1)])
+> for (i in 1:4) plotGoodBadVC(good,wind='b',windRange=windThresholds[i:(i+1)])
+> for (i in 1:4) plotGoodBadVC(bad,wind='b',windRange=windThresholds[i:(i+1)])
+> dev.off(dev.cur())
+> ### End
+
+> dimnames(bad$data)[[2]]
+ [1] "platform" "datetime" "time"     "dt"       "a"        "b"       
+ [7] "o"        "gamma"    "nobs"     "dtbar"    "gammabar" "avc"     
+> for (i in dimnames(bad$data)[[2]]) assign(i,bad$data[,i])
+> dtime<-c(1,diff(time))
+> startIndex<-c((1:length(dtime))[dtime>0],1+length(dtime))
+> begin<-startIndex[-length(startIndex)]
+> torder<-order(avc[begin])
+> datetime.ordered<-(datetime[begin])[torder]
+> avc.ordered<-(avc[begin])[torder]
+> ordered<-cbind(datetime.ordered,avc.ordered)
+> ordered[1:10,]
+      datetime.ordered avc.ordered
+ [1,]       2004011318 -203.700147
+ [2,]       2004030518  -29.731276
+ [3,]       2004022718  -22.642127
+...
+> source('source.q')
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(2,2))
+> for (i in datetime.ordered) plotGoodBadCase(bad,i)
+> dev.off(dev.cur())
+
+> source('/Users/rhoffman/vam/R/source.q')
+> for (i in c(2,4,6,11)) plotGoodBadCase(bad,dates[i],cases[i])
+
+> source('source.q')
+> par(mfcol=c(3,1))
+> histGoodBadGamma(bad,maxGamma=4)
+> histGoodBadGamma(bad,maxGamma=8)
+> histGoodBadGamma(bad,maxGamma=25)
+> histGoodBadGamma(bad,maxGamma=50)
+
+> goodbad<-list(name=c(good$name,bad$name),year=c(good$year,bad$year),latitude=c(good$latitude,bad$latitude),longitude=c(good$longitude,bad$longitude),data=rbind(good$data,bad$data))
+> for (i in dimnames(goodbad$data)[[2]]) assign(i,goodbad$data[,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+> source('/Users/rhoffman/vam/R/plot.gamma.q')
+
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(3,1)) ; for (trim in c(0.01, 0.025, 0.05)) {
+> plot(c(-180,180),c(-4,4), xlab='Time (minutes relative to synoptic time)',ylab='bVC=(a-b)*(o-b)',main='Background, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(dt,bVC,breaks=seq(-180,180,by=15),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(bVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg=paste('Trim=',round(100*trim,digits=1),'%',sep=''),bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(bVC,trim=trim),digits=2),sep=''),bty='n',cex=2) }
+> par(mfrow=c(3,1)) ; for (trim in c(0.01, 0.025, 0.05)) {
+> plot(c(-180,180),c(-4,4), xlab='Time (minutes relative to synoptic time)',ylab='oVC=(o-a)*(o-b)',main='Observation, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(dt,oVC,breaks=seq(-180,180,by=15),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(oVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg=paste('Trim=',round(100*trim,digits=1),'%',sep=''),bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(oVC,trim=trim),digits=2),sep=''),bty='n',cex=2) }
+> par(mfrow=c(3,1)) ; for (trim in c(0.01, 0.025, 0.05)) {
+> plot(c(-180,180),c(-4,4), xlab='Time (minutes relative to synoptic time)',ylab='aVC=(a-b)*(o-a)',main='Analysis, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(dt,aVC,breaks=seq(-180,180,by=15),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(aVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg=paste('Trim=',round(100*trim,digits=1),'%',sep=''),bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(aVC,trim=trim),digits=2),sep=''),bty='n',cex=2) }
+> dev.off(dev.cur())
+
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(3,1)) ; for (trim in c(0.01, 0.025, 0.05)) {
+> plot(c(0,25),c(-2,6), xlab='Average (background, observation) wind speed (m/s)',ylab='bVC=(a-b)*(o-b)',main='Background error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist((o+b)/2,bVC,breaks=c(0,2,4,6,8,10,12,16,20,Inf),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(bVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg=paste('Trim=',round(100*trim,digits=1),'%',sep=''),bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(bVC,trim=trim),digits=2),sep=''),bty='n',cex=2) }
+> par(mfrow=c(3,1)) ; for (trim in c(0.01, 0.025, 0.05)) {
+> plot(c(0,25),c(-2,6), xlab='Average (background, observation) wind speed (m/s)',ylab='oVC=(o-a)*(o-b)',main='Observation error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist((o+b)/2,oVC,breaks=c(0,2,4,6,8,10,12,16,20,Inf),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(oVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg=paste('Trim=',round(100*trim,digits=1),'%',sep=''),bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(oVC,trim=trim),digits=2),sep=''),bty='n',cex=2) }
+> par(mfrow=c(3,1)) ; for (trim in c(0.01, 0.025, 0.05)) {
+> plot(c(0,25),c(-2,6), xlab='Average (background, observation) wind speed (m/s)',ylab='aVC=(a-b)*(o-a)',main='Analysis error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist((o+b)/2,aVC,breaks=c(0,2,4,6,8,10,12,16,20,Inf),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(aVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg=paste('Trim=',round(100*trim,digits=1),'%',sep=''),bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(aVC,trim=trim),digits=2),sep=''),bty='n',cex=2) }
+> dev.off(dev.cur())
+
+> for (i in dimnames(goodbad$data)[[2]]) assign(i,goodbad$data[,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+> VC.sd<-list(a=0.75,o=1.5,b=2.25)
+> VC.means<-list(a=0.1,o=0.4,b=1.4)
+> nsd<-6
+> select.a<-abs(aVC-VC.means$a)<nsd*VC.sd$a
+> select.b<-abs(bVC-VC.means$b)<nsd*VC.sd$b
+> select.o<-abs(oVC-VC.means$o)<nsd*VC.sd$o
+> select<-select.a & select.b & select.o
+> unlist(list(Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+      Total    Selected QCedPercent 
+    4032.00     3837.00        4.84 
+> unlist(list(Total=length(select.b),Selected=sum(select.b),QCedPercent=round(100*(1-sum(select.b)/length(select.b)),digits=2)))
+      Total    Selected QCedPercent 
+     4032.0      3895.0         3.4 
+> unlist(list(Total=length(select.o),Selected=sum(select.o),QCedPercent=round(100*(1-sum(select.o)/length(select.o)),digits=2)))
+      Total    Selected QCedPercent 
+    4032.00     3937.00        2.36 
+> unlist(list(Total=length(select.a),Selected=sum(select.a),QCedPercent=round(100*(1-sum(select.a)/length(select.a)),digits=2)))
+      Total    Selected QCedPercent 
+     4032.0      3895.0         3.4 
+> for (i in dimnames(goodbad$data)[[2]]) assign(i,goodbad$data[select,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(3,1)) ; trim=0
+> plot(c(-180,180),c(-4,4), xlab='Time (minutes relative to synoptic time)',ylab='bVC=(a-b)*(o-b)',main='Background, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(dt,bVC,breaks=seq(-180,180,by=15),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(bVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(bVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> plot(c(-180,180),c(-4,4), xlab='Time (minutes relative to synoptic time)',ylab='oVC=(o-a)*(o-b)',main='Observation, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(dt,oVC,breaks=seq(-180,180,by=15),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(oVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(oVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> plot(c(-180,180),c(-4,4), xlab='Time (minutes relative to synoptic time)',ylab='aVC=(a-b)*(o-a)',main='Analysis, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(dt,aVC,breaks=seq(-180,180,by=15),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(aVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(aVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> # =============
+> par(mfrow=c(3,1)) ; trim=0
+> plot(c(0,25),c(-2,6), xlab='Average (background, observation) wind speed (m/s)',ylab='bVC=(a-b)*(o-b)',main='Background error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist((o+b)/2,bVC,breaks=c(0,2,4,6,8,10,12,16,20,Inf),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(bVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(bVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> plot(c(0,25),c(-2,6), xlab='Average (background, observation) wind speed (m/s)',ylab='oVC=(o-a)*(o-b)',main='Observation error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist((o+b)/2,oVC,breaks=c(0,2,4,6,8,10,12,16,20,Inf),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(oVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(oVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> plot(c(0,25),c(-2,6), xlab='Average (background, observation) wind speed (m/s)',ylab='aVC=(a-b)*(o-a)',main='Analysis error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist((o+b)/2,aVC,breaks=c(0,2,4,6,8,10,12,16,20,Inf),trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(aVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(aVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> # =============
+> par(mfrow=c(3,1)) ; trim=0
+> plot(c(0,5)+0.5,c(-2,6), xlab='Platform',ylab='bVC=(a-b)*(o-b)',main='Background error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(platform,bVC,breaks=0.5+0:5,trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(bVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(bVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> text(1:5,-1.8,unlist(platforms),cex=1.5)
+> plot(c(0,5)+0.5,c(-2,6), xlab='Platform',ylab='oVC=(o-a)*(o-b)',main='Observation error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(platform,oVC,breaks=0.5+0:5,trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(oVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(oVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> text(1:5,-1.8,unlist(platforms),cex=1.5)
+> plot(c(0,5)+0.5,c(-2,6), xlab='Platform',ylab='aVC=(a-b)*(o-a)',main='Analysis error variance, two locations, 2004 data',type='n')
+> plot.super.hist(super.hist(platform,aVC,breaks=0.5+0:5,trim=trim),add=T)
+> abline(h=0,col=2) ; abline(h=mean(aVC,trim=trim),col=4,lwd=2)
+> legend('topleft',leg='VC QC',bty='n',cex=2)
+> legend('topright',leg=paste('Mean=',round(mean(aVC,trim=trim),digits=2),sep=''),bty='n',cex=2)
+> text(1:5,-1.8,unlist(platforms),cex=1.5)
+> dev.off(dev.cur())
+
+> ######################### 05/Jan/2012 #############################
+
+> postscript('gamma.ps',paper='letter',horizontal=F,onefile=T,title='gamma plot')
+> par(mfrow=c(2,2),mar=c(5,5,2,2)+0.1,pty='s')
+> gammaCriticalRange<-c(0.75,1.5)
+> gamma<-seq(-1,2,0.01)
+> plot(c(-0.5,1.5),c(-0.5,1.5),type='n',xlab='',ylab='')
+> xp<-gammaCriticalRange
+> yp<-par('usr')[3:4]
+> polygon(c(xp[1],xp[2],xp[2],xp[1],xp[1]),c(yp[1],yp[1],yp[2],yp[2],yp[1]),border=NA,col=8)
+> abline(h=0,v=c(0,1),lty=2)
+> abline(0,1,col=2,lwd=2)
+> abline(-1,1,col=3,lwd=2)
+> lines(gamma,gamma*(gamma-1),col=4,lwd=2)
+> legend('bottomright',c('a','b','o'),col=c(3,2,4),lty=1,lwd=2,bg='white')
+> title(xlab=expression(gamma),ylab=expression(C[x]/(A-B)^2))
+> dev.off(dev.cur())
+
+$ mv gamma.ps CxGamma.ps
+$ ps2pdf CxGamma.ps CxGamma.pdf 
+
+> ######################### 05/Jan/2012 #############################
+
+> platforms<-list(amsre="AMSRE",f13="F13",f14="F14",f15="F15",qscat="QSCAT",tmi='TMI')
+
+> source('/Users/rhoffman/vam/R/source.q')
+> all.42.375 <- readInputDataByLat('42.375')
+Read 1554280 items
+Read 2017856 items
+Read 1895576 items
+Read 1944544 items
+Read 2365776 items
+> for (i in dimnames(all.42.375)[[2]]) assign(i,all.42.375[,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+> VC.sd<-list(a=0.75,o=1.5,b=2.25)
+> VC.means<-list(a=0.1,o=0.4,b=1.4)
+> nsd<-6
+> select.a<-abs(aVC-VC.means$a)<nsd*VC.sd$a
+> select.b<-abs(bVC-VC.means$b)<nsd*VC.sd$b
+> select.o<-abs(oVC-VC.means$o)<nsd*VC.sd$o
+> select<-select.a & select.b & select.o
+> unlist(list(Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+      Total    Selected QCedPercent 
+ 1222254.00  1190822.00        2.57 
+> unlist(list(Total=length(select.b),Selected=sum(select.b),QCedPercent=round(100*(1-sum(select.b)/length(select.b)),digits=2)))
+      Total    Selected QCedPercent 
+ 1222254.00  1201329.00        1.71 
+> unlist(list(Total=length(select.o),Selected=sum(select.o),QCedPercent=round(100*(1-sum(select.o)/length(select.o)),digits=2)))
+      Total    Selected QCedPercent 
+  1222254.0   1208832.0         1.1 
+> unlist(list(Total=length(select.a),Selected=sum(select.a),QCedPercent=round(100*(1-sum(select.a)/length(select.a)),digits=2)))
+      Total    Selected QCedPercent 
+  1222254.0   1201469.0         1.7 
+> for (i in dimnames(all.42.375)[[2]]) assign(i,all.42.375[select,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+
+
+> ######################### 24/Jan/2012 #############################
+
+> source('/Users/rhoffman/vam/R/plot.gamma.q')
+> source('/Users/rhoffman/vam/R/source.q')
+
+> platforms<-list(amsre="AMSRE",f13="F13",f14="F14",f15="F15",qscat="QSCAT",tmi='TMI')
+> VC.sd<-list(a=0.75,o=1.5,b=2.25)
+> VC.means<-list(a=0.1,o=0.4,b=1.4)
+> nsdVC<-6
+
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1190822.000       2.570 
+        Lat       Total    Selected QCedPercent 
+    -15.125 1909853.000 1904817.000       0.260 
+        Lat       Total    Selected QCedPercent 
+    -46.125 3144161.000 3079259.000       2.060 
+        Lat       Total    Selected QCedPercent 
+      6.125  1284116.00  1274636.00        0.74 
+
+> # Is wind speed affecting the shapes of the curves
+> # Include factor of 4 to make plot interesting
+> # Expect to exclude variations with speed, but this creates a more complex picture
+> bVC<-4*bVC/(a*b) ; oVC<-4*oVC/(a*b) ; aVC<-4*aVC/(a*b)
+> main<-paste('A, B, O normalized error standard deviation, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> source('/Users/rhoffman/vam/R/plot.superhist.sdev.q')
+
+> # exclude obs with O > 15 m/s
+> select<-select.a & select.b & select.o & o < 15
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1135054.000       7.130 
+> main<-paste('A, B, O error standard deviation, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev, O < 15',sep='')
+> source('/Users/rhoffman/vam/R/plot.superhist.sdev.q')
+> # patterns are virtually the same, but overall means decrease slightly.
+
+Try normalizing the value in each bin by overall mean or rms or ms wind speed
+Something like <O>_global/<O>_bin
+If anything seems to correlate with sdev of the obs.
+
+> ######################### 25/Jan/2012 #############################
+
+> lat.name<-'42.375'
+> lat.nameNS<-paste(abs(as.real(lat.name)),ifelse(as.real(lat.name)<0,'S','N'))
+> all.data <- readInputDataByLat(lat.name)
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+> select.a<-abs(aVC-VC.means$a)<nsdVC*VC.sd$a
+> select.b<-abs(bVC-VC.means$b)<nsdVC*VC.sd$b
+> select.o<-abs(oVC-VC.means$o)<nsdVC*VC.sd$o
+> select<-select.a & select.b & select.o
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+
+> sdev=F ; nsd=1/3
+> main<-paste('A, B, O error variance, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> source('/Users/rhoffman/vam/R/plot.superhist.q')
+
+> ! open mean.VC.42.375N.pdf 
+
+> sdev=T ; nsd=1/3
+> main<-paste('A, B, O error st. dev., ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> source('/Users/rhoffman/vam/R/plot.superhist.q')
+
+> ! open sdev.VC.42.375N.pdf 
+
+> # consider gamma, gamma(gamma-1) and (gamma-1) (ie, normalize by (A-B)^2)
+> gamma<-(o-b)/(a-b)
+> select.g<-abs(gamma-1)<nsdVC*2
+> unlist(list(Lat=as.real(lat.name),Total=length(select.g),Selected=sum(select.g),QCedPercent=round(100*(1-sum(select.g)/length(select.g)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1191310.000       2.530 
+> select<-select.a & select.b & select.o & select.g
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1160205.000       5.080 
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> gamma<-(o-b)/(a-b)
+> bVC<-gamma
+> oVC<-gamma*(gamma-1)
+> aVC<-gamma-1
+
+> # added yrange<-wind.range to plot.superhist.q
+
+> sdev=F ; nsd=1/3
+> main<-paste('Normalized error variance, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> source('/Users/rhoffman/vam/R/plot.superhist.q')
+
+> ! open norm.VC.42.375N.pdf 
+
+> sdev=T ; nsd=1/3
+> main<-paste('Normalized error st. dev., ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> source('/Users/rhoffman/vam/R/plot.superhist.q')
+
+> ######### removed cases with abs(a-b) > 3.5
+
+> select.ab<-abs(a-b)<3.5
+> unlist(list(Lat=as.real(lat.name),Total=length(select.ab),Select.Abed=sum(select.ab),QCedPercent=round(100*(1-sum(select.ab)/length(select.ab)),digits=2)))
+        Lat       Total Select.Abed QCedPercent 
+     42.375 1222254.000 1198883.000       1.910 
+> select<-select.a & select.b & select.o & select.ab
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1187670.000       2.830 
+
+$ cp gamma.pdf sdev.VC.42.375N.a-b.lt.3.5.pdf 
+
+But made little difference. Its a small number of cases, but ones that are badly behaved.
+
+> ######################### 27/Jan/2012 #############################
+
+> par(mfrow=c(1,1)) ; trim<-0; np<-length(platforms)
+> means<-c(B=mean(bVC,trim=trim),O=mean(oVC,trim=trim),A=mean(aVC,trim=trim))
+> line.col=c('cyan','red','blue')
+
+> sdev=F ; nsd=1/3
+> main<-paste('A, B, O error variance, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> ylab= if (sdev) 'sqrt(VC) [m/s]' else '(VC) [(m/s)^2]'
+  
+  pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+  breaks=c(0,0.1,0.25,0.5,seq(1,4,0.5),5:8,10,12,14,16,Inf)
+  xrange=c(0,16) ; yrange=c(-2,20)
+
+# # ============= (A-B)^2 [(m/s)^2]
+  xlab='(A-B)^2 [(m/s)^2]'
+  x<-(a-b)^2
+  plot.VC.super.hist(x, bVC, oVC, aVC, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+  for (slope in c(1,1.25,.25)) abline(0,slope,lty=2)
+
+# # ============= (O-B)^2 [(m/s)^2]
+  xlab='(O-B)^2 [(m/s)^2]'
+  x<-(o-b)^2
+  plot.VC.super.hist(x, bVC, oVC, aVC, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+
+# # ============= (O-A)^2 [(m/s)^2]
+  xlab='(O-A)^2 [(m/s)^2]'
+  x<-(o-a)^2
+  plot.VC.super.hist(x, bVC, oVC, aVC, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+
+  dev.off(dev.cur())
+
+> lat.name<-'42.375'
+> lat.nameNS<-paste(abs(as.real(lat.name)),ifelse(as.real(lat.name)<0,'S','N'))
+> all.data <- readInputDataByLat(lat.name,platforms=list(amsre='AMSRE'))
+Read 1554280 items
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+> select.a<-abs(aVC-VC.means$a)<nsdVC*VC.sd$a
+> select.b<-abs(bVC-VC.means$b)<nsdVC*VC.sd$b
+> select.o<-abs(oVC-VC.means$o)<nsdVC*VC.sd$o
+> select<-select.a & select.b & select.o
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375  194285.000  190445.000       1.980 
+> select.lon<-125<lon & lon<225
+> select<-select.a & select.b & select.o & select.lon
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375  194285.000  101787.000      47.610 
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> aVC<-(a-b)*(o-a)
+> bVC<-(a-b)*(o-b)
+> oVC<-(o-a)*(o-b)
+
+  pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+  par(mfrow=c(2,1)) ; trim<-0; np<-1
+  line.col=c('cyan','red','blue')
+  means<-c(B=mean(bVC,trim=trim),O=mean(oVC,trim=trim),A=mean(aVC,trim=trim))
+
+# # ============= Longitude
+  xlab='Longitude (degrees)'
+  x<-lon
+  breaks=seq(125,225,5)
+  xrange=c(125,225)
+
+> sdev=F ; nsd=1/3
+> main<-paste('A, B, O error variance, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+  yrange= if (sdev) c(-0.25,2.0) else c(-1,3)
+  ylab= if (sdev) 'sqrt(VC) [m/s]' else '(VC) [(m/s)^2]'
+  plot.VC.super.hist(x, bVC, oVC, aVC, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+
+> sdev=T ; nsd=1/3
+> main<-paste('A, B, O error st. dev., ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+  yrange= if (sdev) c(-0.25,2.0) else c(-1,3)
+  ylab= if (sdev) 'sqrt(VC) [m/s]' else '(VC) [(m/s)^2]'
+  plot.VC.super.hist(x, bVC, oVC, aVC, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+
+> breaks=seq(125,225,0.25)
+
+  dev.off(dev.cur())
+
+> ######################### 31/Jan/2012 #############################
+
+> source('source.q')
+> all.data <- readInputDataByLat(lat.name)
+In directory:  /Users/rhoffman/Desktop/P1736-NASA-OceanWInds/CCMP/gammaInputDataByLat/ .
+File amsre.speed.2004.42.375.txt: Read 1554280 items
+File f13.speed.2004.42.375.txt: Read 2017856 items
+File f14.speed.2004.42.375.txt: Read 1895576 items
+File f15.speed.2004.42.375.txt: Read 1944544 items
+File qscat.speed.2004.42.375.txt: Read 2365776 items
+File tmi.speed.2004.42.375.txt: Does not exist
+> pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+> breaks=seq(125,225,5)
+> source('/Users/rhoffman/vam/R/plot.pacific.q')
+> breaks=seq(125,225,1)
+> source('/Users/rhoffman/vam/R/plot.pacific.q')
+> breaks=seq(125,225,0.25)
+> source('/Users/rhoffman/vam/R/plot.pacific.q')
+> dev.off()
+
+> intx2<-function(u=1.25,l=1){(u^3-l^3)/3}
+> avgx2<-function(u=1.25,l=1){intx2(u,l)/(u-l)}
+
+> ######################### 23/Feb/2012 #############################
+> lat.name<-'42.375'
+> lat.nameNS<-paste(abs(as.real(lat.name)),ifelse(as.real(lat.name)<0,'S','N'))
+> all.data <- readInputDataByLat(lat.name)
+In directory /Users/rhoffman/Desktop/P1736-NASA-OceanWInds/CCMP/gammaInputDataByLat/ 
+File amsre.speed.2004.42.375.txt: Read 1554280 items
+File f13.speed.2004.42.375.txt: Read 2017856 items
+File f14.speed.2004.42.375.txt: Read 1895576 items
+File f15.speed.2004.42.375.txt: Read 1944544 items
+File qscat.speed.2004.42.375.txt: Read 2365776 items
+File tmi.speed.2004.42.375.txt: Does not exist
+> dimnames(all.data)[[2]]
+ [1] "platform" "datetime" "time"     "dt"       "lat"      "lon"     
+ [7] "a"        "b"        "o"        "gamma"    "nobs"     "dtbar"   
+[13] "gammabar" "avc"     
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[,i])
+> Ca<-(a-b)*(o-a)
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> select.a<-abs(Ca-VC.means$a)<nsdVC*VC.sd$a
+> select.b<-abs(Cb-VC.means$b)<nsdVC*VC.sd$b
+> select.o<-abs(Co-VC.means$o)<nsdVC*VC.sd$o
+> select<-select.a & select.b & select.o
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1190822.000       2.570 
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> Ca<-(a-b)*(o-a)
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> gamma<-(o-b)/(a-b)
+> delta<-1/gamma
+> gamma[gamma>777]<-777; gamma[gamma<(-777)]<-(-777)
+> delta[delta>777]<-777; delta[delta<(-777)]<-(-777)
+> x <- cbind(b,o,a,omb=o-b,oma=o-a,amb=a-b,gamma,delta,Cb,Co,Ca)
+
+> source('/Users/rhoffman/RNH/splus.functions/statistics.q')
+> unlist(basic1way(gamma))
+            N           bar            sd           rms           min           max 
+1190822.00000       1.05831      22.92977      22.95418    -777.00000     777.00000 
+> unlist(basic1way(gamma[abs(a-b)>sqrt(1/2)]))
+ 6.016150e+05  1.074423e+00  5.234009e-01  1.195129e+00 -3.587169e+00  4.772152e+00 
+> unlist(basic1way(gamma[abs(a-b)>1]))
+413602.000000      1.073832      0.429638      1.156591     -2.493056      3.547244 
+> unlist(basic1way(gamma[abs(a-b)>sqrt(2)]))
+ 2.291470e+05  1.071605e+00  3.492385e-01  1.127078e+00 -1.142957e+00  2.705924e+00 
+> unlist(basic1way(delta))
+            N           bar            sd           rms           min           max 
+ 1.190822e+06  7.823612e-01  1.889702e+01  1.891321e+01 -7.770000e+02  7.770000e+02 
+> unlist(basic1way(delta[abs(o-b)>sqrt(1/2)]))
+ 6.807100e+05  7.622295e-01  4.003326e-01  8.609646e-01 -2.443198e+00  3.469676e+00 
+> unlist(basic1way(delta[abs(o-b)>1]))
+ 5.075800e+05  7.594567e-01  3.321468e-01  8.289126e-01 -1.588878e+00  2.615536e+00 
+> unlist(basic1way(delta[abs(o-b)>sqrt(2)]))
+ 3.190910e+05  7.558770e-01  2.776314e-01  8.052511e-01 -9.543081e-01  2.025965e+00 
+
+> gs.all<-gamma.stats(x)
+> round(gs.all,digits=3)
+
+> select<-platform==1
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.amsre<-gamma.stats(x[select,])
+> round(gs.amsre,digits=3)
+
+> select<-platform==2
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.f13<-gamma.stats(x[select,])
+> round(gs.f13,digits=3)
+
+> select<-platform==3
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.f14<-gamma.stats(x[select,])
+> round(gs.f14,digits=3)
+
+> select<-platform==4
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.f15<-gamma.stats(x[select,])
+> round(gs.f15,digits=3)
+
+> select<-platform==5
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.qscat<-gamma.stats(x[select,])
+> round(gs.qscat,digits=3)
+
+> select<-platform>1 & platform<5
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.ssmi<-gamma.stats(x[select,])
+> round(gs.ssmi,digits=3)
+
+> select<-nobs==1
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.nobs1<-gamma.stats(x[select,])
+> round(gs.nobs1,digits=3)
+
+> select<-nobs==2
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.nobs2<-gamma.stats(x[select,])
+> round(gs.nobs2,digits=3)
+
+> select<-nobs==3
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.nobs3<-gamma.stats(x[select,])
+> round(gs.nobs3,digits=3)
+
+> select<-nobs==4
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+> gs.nobs4<-gamma.stats(x[select,])
+> round(gs.nobs4,digits=3)
+
+Bb, etc calculated wrong now fixed?!? Need to recalculate.
+> source('source.q')
+> gs.all<-gamma.stats(x)
+> round(gs.all,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.620 7.978 7.943 0.358 0.035 0.323  1.058  0.782 1.328 0.434 0.085 1.212 0.421 0.074 0.116 0.012 0.011
+stdev    3.552 3.772 3.736 1.278 0.590 1.067 22.930 18.897 2.104 1.030 0.713 2.002 0.973 0.668 0.000 0.000 0.000
+sqrtMean 2.760 2.825 2.818 0.598 0.187 0.569  1.029  0.885 1.152 0.659 0.291 1.101 0.649 0.271 0.340 0.112 0.106
+
+> ######################### 23/Feb/2012 #############################
+
+> # Redid all statistics here:
+> gs.all<-gamma.stats(x)
+> round(gs.all,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.620 7.978 7.943 0.358 0.035 0.323  1.058  0.782 1.328 0.434 0.085 1.212 0.421 0.074 0.116 0.012 0.011
+stdev    3.552 3.772 3.736 1.278 0.590 1.067 22.930 18.897 2.104 1.030 0.713 2.002 0.973 0.668 0.000 0.000 0.000
+sqrtMean 2.760 2.825 2.818 0.598 0.187 0.569  1.029  0.885 1.152 0.659 0.291 1.101 0.649 0.271 0.340 0.112 0.106
+> select<-platform==1
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  190445.000      15.990 
+> gs.amsre<-gamma.stats(x[select,])
+> round(gs.amsre,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.358 7.606 7.589 0.248 0.017 0.231  0.990  0.795 1.238 0.405 0.081 1.181 0.401 0.077 0.057 0.004 0.004
+stdev    3.476 3.536 3.533 1.258 0.569 1.051 22.981 19.592 2.002 0.970 0.670 1.980 0.940 0.642 0.000 0.000 0.000
+sqrtMean 2.713 2.758 2.755 0.498 0.132 0.480  0.995  0.891 1.113 0.636 0.285 1.087 0.633 0.278 0.239 0.066 0.063
+> select<-platform==2
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  245533.000      20.620 
+> gs.f13<-gamma.stats(x[select,])
+> round(gs.f13,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.567 7.998 7.927 0.431 0.071 0.360  1.075  0.701 1.411 0.511 0.132 1.256 0.481 0.106 0.155 0.030 0.025
+stdev    3.519 3.713 3.707 1.318 0.612 1.072 23.199 17.934 2.173 1.106 0.744 2.041 1.024 0.684 0.000 0.000 0.000
+sqrtMean 2.751 2.828 2.815 0.656 0.266 0.600  1.037  0.837 1.188 0.715 0.363 1.121 0.693 0.326 0.394 0.174 0.159
+> select<-platform==3
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  231083.000      19.410 
+> gs.f14<-gamma.stats(x[select,])
+> round(gs.f14,digits=3)
+             b     o     a   omb    oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb     Mo     Ma
+mean     7.541 7.880 7.882 0.339 -0.002 0.341  1.089  0.838 1.399 0.448 0.106 1.283 0.448 0.107 0.115 -0.001 -0.001
+stdev    3.520 3.756 3.706 1.316  0.584 1.085 22.596 18.866 2.183 1.044 0.719 2.069 0.996 0.665 0.000  0.000  0.000
+sqrtMean 2.746 2.807 2.807 0.582  0.000 0.584  1.043  0.916 1.183 0.669 0.326 1.133 0.669 0.327 0.340  0.000  0.000
+> select<-platform==4
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  236954.000      19.900 
+> gs.f15<-gamma.stats(x[select,])
+> round(gs.f15,digits=3)
+             b     o     a   omb    oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb     Mo     Ma
+mean     7.593 7.893 7.909 0.300 -0.016 0.316  1.014  0.794 1.387 0.420 0.078 1.292 0.424 0.083 0.095 -0.005 -0.005
+stdev    3.550 3.792 3.749 1.310  0.584 1.100 22.351 19.034 2.186 1.016 0.722 2.088 0.980 0.680 0.000  0.000  0.000
+sqrtMean 2.755 2.809 2.812 0.548  0.000 0.562  1.007  0.891 1.178 0.648 0.280 1.137 0.651 0.289 0.308  0.000  0.000
+> select<-platform==5
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  286807.000      24.080 
+> gs.qscat<-gamma.stats(x[select,])
+> round(gs.qscat,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.926 8.358 8.271 0.433 0.087 0.345  1.101  0.789 1.209 0.388 0.036 1.060 0.350 0.005 0.149 0.038 0.030
+stdev    3.636 3.934 3.876 1.187 0.587 1.027 23.398 19.140 1.965 0.994 0.696 1.820 0.908 0.651 0.000 0.000 0.000
+sqrtMean 2.815 2.891 2.876 0.658 0.295 0.588  1.049  0.888 1.100 0.623 0.189 1.029 0.592 0.074 0.387 0.194 0.174
+> select<-platform>1 & platform<5
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  713570.000      59.920 
+> gs.ssmi<-gamma.stats(x[select,])
+> round(gs.ssmi,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.567 7.925 7.906 0.357 0.018 0.339  1.059  0.777 1.399 0.460 0.106 1.278 0.454 0.099 0.121 0.007 0.006
+stdev    3.530 3.754 3.720 1.316 0.595 1.086 22.725 18.607 2.180 1.058 0.729 2.066 1.003 0.677 0.000 0.000 0.000
+sqrtMean 2.751 2.815 2.812 0.598 0.136 0.582  1.029  0.881 1.183 0.678 0.325 1.130 0.673 0.315 0.348 0.081 0.079
+> select<-nobs==1
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  274675.000      23.070 
+> gs.nobs1<-gamma.stats(x[select,])
+> round(gs.nobs1,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb   Mo    Ma
+mean     7.784 8.166 8.115 0.382 0.051 0.331  1.090  0.780 1.565 0.438 0.171 1.438 0.418 0.154 0.127 0.02 0.017
+stdev    3.580 3.790 3.749 1.362 0.514 1.134 20.512 16.752 2.336 1.028 0.681 2.218 0.958 0.634 0.000 0.00 0.000
+sqrtMean 2.790 2.858 2.849 0.618 0.227 0.575  1.044  0.883 1.251 0.661 0.413 1.199 0.646 0.392 0.356 0.14 0.130
+> select<-nobs==2
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  393526.000      33.050 
+> gs.nobs2<-gamma.stats(x[select,])
+> round(gs.nobs2,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.617 8.027 7.989 0.410 0.038 0.372  1.052  0.798 1.374 0.461 0.083 1.222 0.446 0.069 0.152 0.016 0.014
+stdev    3.560 3.780 3.742 1.291 0.614 1.074 23.154 19.244 2.154 1.084 0.749 2.022 1.019 0.694 0.000 0.000 0.000
+sqrtMean 2.760 2.833 2.826 0.640 0.195 0.610  1.026  0.893 1.172 0.679 0.288 1.105 0.668 0.263 0.390 0.125 0.119
+> select<-nobs==3
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  379427.000      31.860 
+> gs.nobs3<-gamma.stats(x[select,])
+> round(gs.nobs3,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo   Ba    Mb    Mo    Ma
+mean     7.605 7.940 7.913 0.334 0.027 0.307  1.062  0.795 1.207 0.422 0.048 1.105 0.413 0.04 0.103 0.009 0.008
+stdev    3.527 3.753 3.718 1.232 0.611 1.032 23.103 20.371 1.968 1.009 0.712 1.883 0.958 0.67 0.000 0.000 0.000
+sqrtMean 2.758 2.818 2.813 0.578 0.164 0.554  1.031  0.891 1.099 0.650 0.220 1.051 0.643 0.20 0.321 0.095 0.091
+> select<-nobs==4
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),Percent=round(100*(sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected     Percent 
+     42.375 1190822.000  143194.000      12.020 
+> gs.nobs4<-gamma.stats(x[select,])
+> round(gs.nobs4,digits=3)
+             b     o     a   omb   oma   amb  gamma  delta    Cb    Co    Ca    Bb    Bo    Ba    Mb    Mo    Ma
+mean     7.352 7.585 7.570 0.233 0.015 0.218  1.004  0.712 1.062 0.383 0.022 1.012 0.379 0.019 0.051 0.003 0.003
+stdev    3.524 3.734 3.712 1.179 0.600 0.996 26.033 17.721 1.765 0.926 0.654 1.738 0.896 0.629 0.000 0.000 0.000
+sqrtMean 2.711 2.754 2.751 0.482 0.122 0.467  1.002  0.844 1.031 0.619 0.150 1.006 0.616 0.138 0.225 0.059 0.057
+
+> gs.many<-rbind(gs.all,gs.qscat,gs.amsre,gs.ssmi,gs.f13,gs.f14,gs.f15,gs.nobs1,gs.nobs2,gs.nobs3,gs.nobs4)
+> gs.many[,1:3]<-round(gs.many[,1:3],digits=1)
+> gs.many[,-c(11,14,17)]<-round(gs.many[,-c(11,14,17)],digits=2)
+> gs.many[,c(11,14,17)]<-round(gs.many[,c(11,14,17)],digits=3)
+
+> # Effective N
+> gs.many<-rbind(gs.all,gs.qscat,gs.amsre,gs.ssmi,gs.f13,gs.f14,gs.f15,gs.nobs1,gs.nobs2,gs.nobs3,gs.nobs4)
+> gs.accuracy<-1/gs.many[seq(1,31,3),9:11]
+> dimnames(gs.accuracy)[[1]]<-c("all","qscat","amsre","ssmi","f13","f14","f15","nobs1","nobs2","nobs3","nobs4")
+> gs.nobs<-(gs.accuracy[,3]-gs.accuracy[,1])/gs.accuracy[,2]
+> round(gs.nobs,digits=1)
+  all qscat amsre  ssmi   f13   f14   f15 nobs1 nobs2 nobs3 nobs4 
+  4.8  10.6   4.7   4.0   3.5   3.9   5.1   2.3   5.2   8.4  16.7 
+
+
+> gamma<-(o-b)/(a-b)
+> select.g<-abs(gamma-1)<nsdVC*2
+> unlist(list(Lat=as.real(lat.name),Total=length(select.g),Selected=sum(select.g),QCedPercent=round(100*(1-sum(select.g)/length(select.g)),digits=2)))
+> select<-select.a & select.b & select.o & select.g
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+
+> par(mfrow=c(1,1)) ; trim<-0; np<-length(platforms)
+> means<-c(B=mean(Cb,trim=trim),O=mean(Co,trim=trim),A=mean(Ca,trim=trim))
+> line.col=c('cyan','red','blue')
+> sdev=F ; nsd=1/3
+> main<-paste('A, B, O error variance, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> ylab= if (sdev) 'sqrt(VC) [m/s]' else '(VC) [(m/s)^2]'
+> breaks=c(0,0.1,0.25,0.5,seq(1,4,0.5),5:8,10,12,14,16,Inf)
+> xrange=c(0,16) ; yrange=c(-2,20)
+> xlab='(A-B)^2 [(m/s)^2]'
+> x<-(a-b)^2
+> plot.VC.super.hist(x, Cb, Co, Ca, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+
+> ######################### 2/Mar/2012 #############################
+> lat.name<-'42.375'
+> lat.nameNS<-paste(abs(as.real(lat.name)),ifelse(as.real(lat.name)<0,'S','N'))
+> all.data <- readInputDataByLat(lat.name)
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[,i])
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> Ca<-(a-b)*(o-a)
+> select.b<-abs(Cb-VC.means$b)<nsdVC*VC.sd$b
+> select.o<-abs(Co-VC.means$o)<nsdVC*VC.sd$o
+> select.a<-abs(Ca-VC.means$a)<nsdVC*VC.sd$a
+> select<-select.b & select.o & select.a
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1190822.000       2.570 
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> Ca<-(a-b)*(o-a)
+
+> pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+> par(mfrow=c(1,1)) ; trim<-0; np<-length(platforms)
+> means<-c(B=mean(Cb,trim=trim),O=mean(Co,trim=trim),A=mean(Ca,trim=trim))
+> line.col=c('cyan','red','blue')
+> sdev=F ; nsd=1/3
+> main<-paste('B, O, A error variance, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> ylab= if (sdev) 'sqrt(Cx) [m/s]' else '(Cx) [(m/s)^2]'
+> breaks=c(0,0.1,0.25,0.5,seq(1,4,0.5),5:8,10,12,14,16,Inf)
+> xrange=c(0,16) ; yrange=c(-2,20)
+> xlab='(A-B)^2 [(m/s)^2]'
+> x<-(a-b)^2
+> plot.VC.super.hist(x, Cb, Co, Ca, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+> for (slope in c(1,1.125,.125)) abline(0,slope,lty=2,col=2)
+> xlab='(O-B)^2 [(m/s)^2]'
+> x<-(o-b)^2
+> plot.VC.super.hist(x, Cb, Co, Ca, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+> for (slope in c(0.78,1-0.78)) abline(0,slope,lty=2,col=1)
+> xlab='(O-A)^2 [(m/s)^2]'
+> x<-(o-a)^2
+> plot.VC.super.hist(x, Cb, Co, Ca, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col)
+  dev.off(dev.cur())
+
+Cannot reproduce mean.VC.42.375N.vs.squared.increments.pdf.
+Results I get today are the same using the saved diary entries from 1/27,
+the version above for today, and
+the new version of super.hist that handles Inf values properly.
+
+The standard plots are recreated no problem using the new verison of super.hist, and
+renaming everything in plot.super.hist.q
+
+> sdev=T ; nsd=1/3
+> main<-paste('B, O, A error st. dev., ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> source('/Users/rhoffman/vam/R/plot.superhist.q')
+
+> ! open sdev.VC.42.375N.pdf 
+
+> select.b<-abs(Cb-VC.means$b)<nsdVC*VC.sd$b
+> select.o<-abs(Co-VC.means$o)<nsdVC*VC.sd$o
+> select.a<-abs(Ca-VC.means$a)<nsdVC*VC.sd$a
+> select.ab<-(a-b)^2<10
+> select.oa<-(o-a)^2<5
+> select<-select.a & select.b & select.o
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+> sum(select & !select.ab)
+> sum(select & select.ab & !select.oa)  
+
+Oh no. Now I can reproduct the 1/27 figure. What did I do?
+Apparently no QC.
+> SH.b<-super.hist(x,Cb,breaks)
+> SH.o<-super.hist(x,Co,breaks)
+> SH.a<-super.hist(x,Ca,breaks)
+> plot(xrange,yrange,xlab=xlab,ylab=ylab,main=main,type='n')
+> plot.super.hist(SH.b,add=T,nsd=nsd,sdev=sdev,line.col=line.col[1])
+> plot.super.hist(SH.o,add=T,nsd=nsd,sdev=sdev,line.col=line.col[2])
+> plot.super.hist(SH.a,add=T,nsd=nsd,sdev=sdev,line.col=line.col[3])
+> savex<-list(x=x,o=o,b=b,Cb=Cb,Co=Co,Ca=Ca,SH.b=SH.b,SH.o=SH.o,SH.a=SH.a) 
+
+> SHQC.b<-super.hist(x,Cb,breaks)
+> SHQC.o<-super.hist(x,Co,breaks)
+> SHQC.a<-super.hist(x,Ca,breaks)
+
+> ######################20 Mar 2011
+
+> select<-select.g
+> qc(select)
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1218484.000       0.310 
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> gamma<-(o-b)/(a-b)
+> delta<-(a-b)/(o-b)
+> yrange=c(-5,5)
+> ylab='gamma, delta'
+> par(mfrow=c(2,1))
+> trim<-0; np<-length(platforms)
+> basename<-'gamma.gQC.all'
+> xlab='(A-B)^2 [(m/s)^2]' ; name<-paste(basename,'vs','amb2',sep='.')
+> means<-c(gamma=mean(gamma,trim=trim),delta=mean(delta,trim=trim))
+> line.col=c('red','blue')
+> x<-(a-b)^2
+> breaks=c(0,0.1,0.25,0.5,seq(1,4,0.5),5:8,10,12,14,16,Inf)
+> xrange=c(0,16)
+> plot.gd.super.hist(x, gamma, delta, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col,name=name)
+
+> select<-select.d
+> qc(select)
+> qc(select)
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1219652.000       0.210 
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> gamma<-(o-b)/(a-b)
+> delta<-(a-b)/(o-b)
+> yrange=c(-5,5)
+> ylab='gamma, delta'
+> par(mfrow=c(2,1))
+> trim<-0; np<-length(platforms)
+> basename<-'gamma.dQC.all'
+> xlab='(O-B)^2 [(m/s)^2]' ; name<-paste(basename,'vs','omb2',sep='.')
+> means<-c(gamma=mean(gamma,trim=trim),delta=mean(delta,trim=trim))
+> line.col=c('red','blue')
+> x<-(o-b)^2
+> breaks=c(0,0.1,0.25,0.5,seq(1,4,0.5),5:8,10,12,14,16,Inf)
+> xrange=c(0,16)
+> plot.gd.super.hist(x, gamma, delta, breaks,nsd=nsd,sdev=sdev,ylab=ylab,main=main,means=means,xrange=xrange,yrange=yrange,xlab=xlab,line.col=line.col,name=name)
+
+> # combine two plots
+> sdev<-F ; nsd=1 ; trim=0 ; histo=T ; super=T
+> main<-paste('gamma, delta ', lat.nameNS, ', 2004 data, g-d QC, +/- 1 sdev',sep='')
+> yrange=c(-5,5)
+> ylab='gamma, delta'
+> xlab='(A-B)^2, (O-B)^2 [(m/s)^2]'
+> means<-c(gamma.gQC.all.vs.amb2$mean['gamma'],gamma.dQC.all.vs.omb2$mean['delta'])
+> line.col=c('red','blue')
+> xrange=c(0,16)
+> SH.gamma<-gamma.gQC.all.vs.amb2$gamma
+> SH.delta<-gamma.dQC.all.vs.omb2$delta
+> pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+> par(mfrow=c(2,1))
+> plot(xrange,yrange,xlab=xlab,ylab=ylab,main=main,type='n')
+> plot.super.hist(SH.gamma,add=T,nsd=nsd,sdev=sdev,histo=histo,super=super,line.col=line.col[1])
+> plot.super.hist(SH.delta,add=T,nsd=nsd,sdev=sdev,histo=F,super=super,line.col=line.col[2])
+> abline(h=0,col=1)
+> abline(h=means,col=line.col,lwd=2,lty=3)
+> legend('topright',leg=paste(names(means),round(means,digits=2),sep=' = '),lwd=2,lty=1,col=line.col,title='Mean values',cex=1)
+> plot.super.hist(SH.gamma,add=T,nsd=0,sdev=sdev,histo=F,super=super,line.col=line.col[1])
+> plot.super.hist(SH.delta,add=T,nsd=0,sdev=sdev,histo=F,super=super,line.col=line.col[2])
+> dev.off(dev.cur())
+> system("mv gamma.pdf superhist.gd.42.375.special.gdQC.all.pdf")
+ 

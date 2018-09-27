@@ -1,0 +1,97 @@
+%Publisher-line: <!--Public document type definition. Typical invocation:
+%Publisher-line: <!DOCTYPE publplain PUBLIC "-//ArborText//DTD General Publplain//EN">
+%Publisher-line: -->
+%Publisher-line: <!--The Publisher, ArborText, Inc., 1988-1991, v.3001-->
+%Publisher-line: <?Pub Sty document FontFamily="serifed" >
+%Publisher-line: <?Pub Sty document TypeSize="12pt" >
+%Publisher-line: <?Pub Sty document TypeStyle="regular" >
+%Publisher-line: <?Pub Sty document TexFormatFile="atlplain" >
+%Publisher-line: <publplain>
+
+% For latex2.09:
+%\documentstyle[12pt,twoside,titlepage]{article}
+% For latex2e:
+\documentclass[12pt,twoside,titlepage]{article}
+% For multipart documents you should use:
+% \documentstyle[12pt,twoside]{report}
+\textheight9in
+\textwidth6.5in
+\oddsidemargin0in
+\evensidemargin0in
+\topmargin0.17in
+%Publisher-line: \topmargin-0.5in
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{3}
+\pagestyle{myheadings}
+% For references (e.g. ``... \reference{Daley, 1985}{Dal85}'' 
+%    or ``method of Daley \reference{1985}{Dal85}''
+% \newcommand{\reference}[2]{(#1)}
+%Bibtex-line: \newcommand{\reference}[2]{(#1 \cite{#2})}
+% \newcommand{\reference}[2]{\cite{#2}}
+\newcommand{\reference}[2]{(#1 [#2])}
+\newcommand{\computer}[1]{{\tt #1}}
+% These commands can be used within math mode or within normal text
+\newcommand{\Matrix}[1]{{\bf {#1}}}
+\newcommand{\Vector}[1]{\mbox{\boldmath ${#1}$}}
+\newcommand{\Dot}[2]{\Vector{{#1} \cdot {#2}}}
+\newcommand{\Cross}[2]{\Vector{{#1} \times {#2}}}
+\newcommand{\Expect}[1]{\mbox{$ \langle {#1} \rangle $}}
+\newcommand{\NOTE}[1]{{\Large \underline {#1}}}
+\newcommand{\TBD}{[TBD]}
+\newcommand{\mks}[2]{\mbox{$ {#1} \; {#2} $}}
+\newcommand{\etal}{{\em et~al.}}
+\newcommand{\degrees}[1]{\mbox{$ {#1}^\circ $}}
+\newcommand{\Chapter}[1]{document {\tt #1}}
+\newcommand{\Appendix}[1]{document {\tt #1}}
+\newcommand{\startAppendixes}{\appendix}
+\newcommand{\tabhead}[1]{{\bf #1}}
+\newcommand{\xref}[2]{document {\tt #1}, label {\tt #1:#2}}
+\newcommand{\authors}{list of authors}
+\newcommand{\sysoverview}{See \xref{sci}{system-overview}.}
+\newcommand{\RCSid}{$Id: start.doc,v 1.9 1998/02/26 15:01:06 trn Exp $}
+\newcommand{\RCSrevision}{$Revision: 1.9 $}
+\newcommand{\tapinfo}{\thanks{ 
+        Supported by USAF contract F19628--94--C--0027.
+        AER, Inc. intends to retain % (has retained)
+        patent rights to certain aspects of the TAP algorithms
+        under FAR 52.227-11.}}
+\newcommand{\docinfo}{\thanks{ 
+        To be submitted to Phillips Laboratory (PL/GPAP),
+        Hanscom AFB, Massachusetts 01731--3010.}}
+\newcommand{\rightsinfo}[1]{\thanks{ 
+        Copyright \copyright\ #1.  
+        Work in Progress.  All Rights Reserved.}}
+\newcommand{\aerinfo}{\thanks{
+        Atmospheric and Environmental Research (AER), Inc.,
+        840 Memorial Drive, Cambridge, MA 02139--3794.
+        Phone: +1 617 547 6207.  Fax: +1 617 661 6479.
+        Net: ``aer@aer.com''.}}
+\newcommand{\revinfo}[1]{\thanks{
+        AER document version control: \computer{P584, #1}.
+        Formatting version \computer{$Id: start.doc,v 1.9 1998/02/26 15:01:06 trn Exp $}.}}
+\newcommand{\xtitle}[4]{
+        \title{Theater Analysis Procedures \\ (TAP)\tapinfo \\
+% For delivery modify \docinfo and eliminate \rightsinfo
+        #1$\!\!$\docinfo} 
+        \author{#2\rightsinfo{#2} \\
+        Atmospheric and Environmental Research, Inc.\aerinfo }
+        \date{Revision #3\revinfo{#4} \\~\\ \today}
+        \maketitle
+        \markboth {AER, Inc. Theater Analysis Procedures (TAP) Documentation}
+        {#1 (Rev. #3)}
+        \begin{titlepage} \mbox{~} \end{titlepage}
+}
+
+\newcommand{\x}[1]{\xtitle{#1}{\authors}{\RCSrevision}{\RCSid}}
+% \newcommand{\x}[1]{\chapter {#1}}
+\newcommand{\xx}[1]{\section {#1}}
+\newcommand{\xxx}[1]{\subsection {#1}}
+\newcommand{\xxxx}[1]{\subsubsection {#1}}
+\newcommand{\xxxxx}[1]{\paragraph {#1}}
+\newcommand{\xxxxxx}[1]{\subparagraph {#1}}
+
+\begin{document}
+
+%Bibtex-line: \bibliographystyle{tap}
+
+%Publisher-line: <start-text>

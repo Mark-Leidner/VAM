@@ -1,0 +1,759 @@
+VAM is a flexible system for analyzing ocean surface winds.  It is a
+mature reseach tool, that may also be used in production settings.
+VAM knows about conventional data (u and v wind components), ssmi data
+(wind speed, s), ambiguous scatterometer winds (u_i,v_i:i-1,n), and
+scatterometer backscatter (s0_i:i=1,n).
+
+VAM uses a generic data structure to store these data.
+VAM can use the First Guess at the Appropriate Time (FGAT).
+VAM can use Feature Calibration and Alignment (FCA) to correct for
+phase errors in the background.
+
+VAM is controlled by standard input.  This input contains task (or
+procedures) commands and associated namelists.  Arbitrary comments may
+precede any namelist.  The order of the tasks is quite flexible.  As
+long as what you ask VAM to do makes sense, you can choose any order.
+For example, you can read data or read gridded winds first.  Once you
+have data and a background gridded wind field you can QC, analyze, or
+write output data sets in any order.
+
+The main tasks are OBS, GRID, and CALC.  Optional tasks are FGAT and
+INIT.  Each task requires at least one namelist as described below.
+The end of file or the special task END terminates the run.  Only the
+characters indicated here in upper case are checked (but the
+comparison is case insensitive) to determine which procedure to
+execute.  For example a record containing "Observation quality
+control.  " would trigger the OBS procedure.  (See vam_main.f for
+details.)  It is a design goal that comparisons in the vam for
+character data are all case insensitive.
+(This does not apply to filenames.)
+
+A minimal sequence would be to read in some data with OBS, read in a
+background field with GRID, perform an analysis with CALC, and then
+write out the analysis with GRID.
+One could also just use GRID to calculate basic statistics
+comparing two gridded wind fields.
+
+But there are many variations because quality control can be refined
+after a preliminary analysis or the grid resolution can be increased
+after a preliminary analysis.
+
+In what follows we define the capabilities of the procedures and
+describe how namelists control each one.  Sometimes a variable set in
+one namelist determines whether another namelist is read in.
+Generally namelists variables that are character are set to default to
+blank before the namelist is read, those that are logical are set to
+default to .FALSE. before the namelist is read, and those that have
+numeric values remember their previous value (because of the SAVE
+attribute) and they have initial defaults.  There are important
+exceptions noted below (QC and grid structure in particular).  Some
+namelist variables have defaults set depending on other namelist
+variables, or the contents of the data structures.  Also namelist
+variables MORE and VPRINT are "local" variables and only relate to the
+current namelist and its associated procedures.
+
+In the output status is reported to indicate date-time matching.
+c!# The final value of status indicates the number of obs data date-times
+c!# that do not match the grid date-time.
+c!# A value of 0 indicates all date-times match.
+c!# A negative values indicate something is missing:
+c!# -1 if the grid is undefined, -2 if there are not obs data, and
+c!# -3 if both are missing.
+
+OBServation processing
+=========== ==========
+
+The OBS procedures read, write, and quality control data.  Each input
+data set is stored in its own data structure.  (See vam_obs_mod.f for
+details.)  When reading (read_obs = .TRUE.) only a single data set is
+processed.  Otherwise (as long as read_obs = .FALSE.) writting and
+quality control can operate on multiple data sets.  A data set is read
+or written to a VAM format header file and a VAM format data file.
+The header file is ascii, the data file is direct unformatted.
+Preprocessing routines create these files.  The format of these data
+sets is described elsewheres.  Data sets are read from indir and
+written to outdir which default to a blank.  If specified indir and
+outdir should include a trailing slash (/).
+
+c!# vam_obs namelist
+      CHARACTER (LEN=len_name) :: obsid	!#
+      CHARACTER (LEN=len_fname) :: filename, indir, outdir !#
+      LOGICAL :: read_obs, qc_obs, write_obs, more, vprint !#
+      NAMELIST /vamobs/ obsid, filename, indir, outdir,	!#
+     &     read_obs, qc_obs, write_obs, more, vprint !#
+
+c!#~ obsid     observation type matching value
+c!#~ filename  file name matching value
+c!#~ indir     directory for reading
+c!#~ outdir    directory for writting
+c!#~ read_obs  read a data set?
+c!#~ qc_obs    qc matching or newly read data
+c!#~ qc_obs.   (a qc namelist will be read immediately)
+c!#~ write_obs write matching or newly read data
+c!#~ more      read another namelist after processing this one? 
+c!#~ vprint    print verification information?
+
+Which data sets are processed is determined by matching the obsid and
+fname of the namelist to corresponding variables in the data sets.  An
+obsid or fname equal to ' ' matchs anything.  Matching is case
+insensitive.
+
+vamobs namelists (and possibly qcobs namelists) will continue to be
+read in until more=.FALSE.  When more and qc_obs both equal
+.TRUE. one or more qcobs namelists will be read depending on the value
+of more in the qcobs namelist, before the next vamobs namelist is read.
+
+c     !# qc_obs namelist
+      CHARACTER (LEN=len_name) :: obsid
+      REAL, SAVE :: gamma(4)=(/1,1,60,9/), vcalm=1
+      INTEGER, SAVE :: nambig=4, ipass=0
+      LOGICAL :: dualqc, closest, ignore_rain, more
+      NAMELIST /qcobs/ obsid, gamma, vcalm, nambig, ipass,
+     &    dualqc, closest, ignore_rain, more
+
+c     !#~ obsid    apply gamma parameters to this obsid
+c     !#~ obsid.   (blank => overwrite all; none => do nothing with gamma)
+c     !#~ gamma    critical values for tests
+c     !#~ gammas   storage for all gammas
+c     !#~ vcalm    wind speeds <= vcalm are considered calm
+c     !#~ nambig   keep ambiguities for 1,...,nambig (ignore if < 0)
+c     !#~ ipass    qc pass index for storing qc history /0/
+c     !#~ dualqc   dual qc processing (implies nambig = 2)
+c     !#~ closest  edit ambiguities that are not close
+c     !#~ ignore_rain ignore pre-processing rain flag in qc decisions?
+c     !#~ more     read another qc namelist?
+
+      CHARACTER (LEN=len_name), PARAMETER :: obsid_none='none'
+      REAL, SAVE :: gammas(4,n_obsids)
+
+qcobs namelists will continue to read in until more=.FALSE.  This
+allows setting the gamma values for different obsid's.  The values are
+stored in the array gammas.  Except for gamma, the qcobs namelist
+variables use the last value set.  Note that different critical values
+may be used for different passes.
+
+Particulars:
+
+The defaults for ipass and obsid in namelist qcobs are set when qc_obs
+is .TRUE. in namelist vamobs.  ipass is incremented by one, and obsid
+is set to the value determined according to namelist vamobs.  The qc
+pass number is used to calculate which bit to store the history of
+qc_flag in qc_bit_map.
+
+c The logic to handle qc depends on a variable qc_bit_map  that stores
+c the current qc decision details and qc history for each datum.
+c The qc decision whether or not to use a datum is stored in a variable
+c qc_flag.  qc_flag is set on if any of the bits set in qc_bit_map match
+c a specified mask.  this allows some flexibility.
+
+c Usually for ambiguous data a special mask is used so that the current
+c analysis checks are ignored.  This is because the cost function
+c essentially includes interactive robust qc.  However if closest is
+c .TRUE. then only ambiguities close enough to the background pass qc.
+
+c Another mask is used to reset the qc_flag prior to qc.  This resets
+c qc_flag according to the preprocessing and out-of-bounds bits in
+c qc_bit_map.  Note that if ignore_rain is .TRUE. any preprocessing rain
+c flags will be ignored in setting qc_flag in this and every other case.
+c Since qc_flag is always reset every pass of qc is independent of
+c previous passes.  This means that if you do dualqc while reading an
+c ambiguity data set, these qc flags will be lost if you do a gross qc
+c check later.  In other words it is necessary to redo all vam qc tests
+c that you are interested in every time a data set is qc'd.
+
+c Wind analysis checking is based on three criteria:
+c 
+c 1. relative vector difference (for all wind vector obs & analysis >
+c vcalm).  The test is (delv2 .GT. gamma1**2*velavg**2) where delv2 =
+c (ui5-uobs)**2 + (vi5-vobs)**2 and velavg = (veli5 + velobs)/2
+c 
+c 2. relative speed difference (for all wind obs or analysis > vcalm)
+c The test is (ABS(velobs - veli5) .GT. gamma2*velavg)
+c 
+c 3. angle difference (for all wind vector obs & analysis > vcalm)
+c This is based on dot product definition,
+c (ui5*uobs + vi5*vobs .LT. cos_gamma3*velobs*veli5)
+c Note that gamma3 is in degrees.
+c 
+c sigma0 analysis checking is based on a fourth criterion:
+c 
+c 4. dB difference (for sigma0).  The test is (ABS(10 * log10(s05(i)) -
+c 10 * log10(s0obs(i))) .gt. gamma4)
+
+c Using two vamobs namelists and associated qcobs namelists makes
+c it possible to do a sort of generic qc followed by a qc of
+c data from a single input file.  Since the second qc resets the
+c qc_flag and redoes the qc decisions for this data set only, it is
+c possible to retain all of a special data type.  If you do this
+c you might want to specify ipass on the second qcobs namelist if you
+c want to consider the sequence of generic qc followed by qc of a
+c specific data set to be a single qc pass.
+
+c Ambiguity editting includes:
+
+c a. Using only first nambig ambiguities.  eg, if nambig=2
+c ambiguities 3 and 4 (if they exist) will be flagged.  if
+c nambig=1 only the most likely amibuity will be used or only the
+c selected ambiguity will be used depending on how the
+c preprocessor orders things.
+
+c b.  Dual ambiguity quality control.  The first two ambiguities often
+c unambiguously define the streamine.  For dualqc = .TRUE., the entire
+c WVC will be flagged if ambiguity 2 is not within 45 degrees of
+c opposition to ambiguity 1.  We have always used nambig=2 when
+c dualqc=.TRUE.
+
+c c. For closest = .TRUE. only ambiguities close enough to pass analysis
+c checking will be used.  Could be used in combination with nambig=2.
+
+GRIDded data sets processing
+======= ==== ==== ==========
+
+Grid operations allow for reading, writing, and interpolating the
+gridded wind fields.  At least two wind fields are defined in the vam, the
+background and the current estimate of the analysis.  For FCA
+processing an adjustment wind field and possibly an adjusted wind
+field are also defined.  (See vam_grid_mod.f for details.)
+
+c!# gridops namelist:
+      CHARACTER (len=len_fname) :: analysis_fname, background_fname,
+     &    save_fname, analysis_name, background_name,
+     &    adjustment_fname, save_adjustment_fname, save_adjusted_fname
+      REAL, SAVE :: cdrag=1E-3
+      LOGICAL copyback, copygradients, gridstats, vprint, save_all
+      NAMELIST /gridops/ analysis_fname, background_fname,
+     &    save_fname, analysis_name, background_name,
+     &    adjustment_fname, save_adjustment_fname, save_adjusted_fname,
+     &    cdrag, fca_mode, idate, itime,
+     &    copyback, copygradients, gridstats, vprint, save_all
+c!#~   analysis_fname    name of file to read analysis wind field
+c!#~   background_fname  name of file to read background wind field
+c!#~   save_fname        name of file to write analysis wind field
+c!#~   analysis_name     used to set name in grid data structure
+c!#~   analysis_name.    defaults to save_fname (if defined)
+c!#~   analysis_name..   or to analysis_fname
+c!#~   background_name   like analysis_name but for background
+c!#~   background_name.  defaults to background_fname
+c!#~   adjustment_fname  name of file to read adjustment wind field
+c!#~   save_adjustment_fname name of file to write adjustment wind field
+c!#~   save_adjusted_fname name of file to write adjusted wind field
+c!#~   cdrag             drag coefficient
+c!#~   fca_mode          mode of fca operation (see grid_mod)
+c!#~   idate             valid date (yyyymmdd) of the wind field
+c!#~   itime             valid time (hhmmss) of the wind field
+c!#~   copyback          copy background to analysis?
+c!#~   copygradients     copy gradients to trajectory values?
+c!#~   copygradients.    use to write out gradients to save fnames
+c!#~   gridstats         calculate and print grid statistics?
+c!#~   vprint            print verification information?
+c!#~   save_all          if periodic grid, save wrap around region?
+
+fca_mode is described in the next section.
+
+idate and itime must match the corresponding values in grid files read
+in or a warning is issued.  Values are saved, but initial defaults for
+idate and itime are values from the background file if that is read
+in, or in the case of no background file, from the analysis file if
+that is read in.  Set idate = 0 to reinitialize these defaults.
+
+After a gridops namelist is read, a grid namelist is read to describe
+the grid to be used in the vam.  If this is different than the grid
+description in an input grid data set, the input grid is interpolated
+to the new grid definition.  Note that the new grid can be inside of
+the input grid.  After the VAM grid is described (details to follow),
+the grid operations occur in the following order.
+
+First if background_fname is defined it is used to set the background
+grid variables (u0, v0) in the vam.  Otherwise if (u0, v0) were
+previously defined they are used to interpolate to the new vam grid.
+Finally, if background_fname and (u0, v0) are undefined, (u0, v0) are
+set to zero.  If copyback is .FALSE. the same decision sequence is
+used to define the analysis values (u5, v5).  Otherwise if copyback is
+.TRUE. than the background values (u0, v0) are copied to the analysis
+values (u5,v5).
+
+If fca_mode.GT.0 the same decision sequence as for the background is
+used to define the adjustment wind values (du5, dv5).  Once the
+adjustment wind field is defined it and the background wind are used
+to set the adjusted wind (or the analysis wind if fca_mode.EQ.1).
+
+Then the vam calculates the analysis interpolated to all the
+observation locations.  This last calculation also occurs in other
+places in the vam when the grid values (u5,v5) are defined or
+redefined, such as after a minimization, or when any observation data
+are read.  The number of observations in each grid cell passing QC
+(qc_flag false) are counted.  After all this if save_fname is defined
+the grid values and number of observations are written out.
+
+For debugging:
+If copygradients is the very first grid operation is to copy all
+gradients into the corresponding trajectory value variables.  This
+destroys the trajectory values, but allows one to calculate
+statistics of the adjoint variables or to save them to files.
+
+As mentioned earlier, the grid namelist provides the grid description
+for the vam.  By using the detailed namelists after the grid namelist
+it is possible to modify the standard definitions of the data, active,
+and integration regions.  You may make these areas smaller than the
+default, not larger.  (If you use the detailed namelists, you should
+repeat them everytime you use a grid namelist.)  Data outside the data
+region are flagged as out of bounds.  Points within the active region
+change during the minimization.  Points on and external to the active
+region boundary will be held fixed during the minimization, except for
+points on the east and western boundaries for a 0-360 longitude
+extent.  The integration domain specifies the region over which the
+background, smoothness, and dynamical constraints are integrated.
+
+If already described the current vam grid description provides the
+defaults for the grid namelist variables.  Otherwise file header
+information from analysis_fname or if that is not present from
+background_fname provide the default grid description.  If none of
+these is present the grid description is empty and the defaults will
+contain nonsense values.
+
+IMPORTANT: The grid should not contain the pole.
+
+We should mention that in the VAM, namelist variables xmin, xmax,
+ymin, and ymax describe the areas used for data acceptance, the grid
+points that are changed by the vam, and the integration domain for
+those functionals formulated as integrals.  The actual grids stored in
+the VAM are defined (in grid_mod) by lon0, dlon, nlon, lat0,, dlat,
+nlat and includes an extra row of grid points beyond the area
+described by xmin, xmax, ymin, and ymax in namelist grid.
+
+c!# Grid namelists:
+      REAL xmin, xmax, ymin, ymax, delx, dely
+      INTEGER, SAVE :: interp_method=1
+      LOGICAL details, boundary
+      NAMELIST /grid/ xmin, xmax, ymin, ymax,
+     &    delx, dely, interp_method, details, boundary,
+      NAMELIST /data/ xmin, xmax, ymin, ymax
+      NAMELIST /active/ xmin, xmax, ymin, ymax
+      NAMELIST /integration/ xmin, xmax, ymin, ymax
+c!#~   xmin      minimum value of longitude
+c!#~   xmax      maximum value of longitude
+c!#~   ymin      minimum value of latitude
+c!#~   ymax      maximum value of latitude
+c!#~   details   should the detailed namelists be read?
+c!#~   boundary  should boundary points be allowed to vary?
+c!#~   interp_method  interpolation method
+c!#~   interp_method. (1=>bilinear;2=>quasi-bicubic)
+
+c Namelist angle variables are input and written in degrees, but stored
+c in radians.  When converting from radians to degrees values within
+c 0.0005 of a whole number of degrees are rounded to that whole number.
+
+Note: xmin,xmax,ymin,ymax define the region of interest, not the grid
+as it is stored.  If you set xmin=10, xmax=60, delx =1, then the grid
+as stored will run from 9 to 61.  This is required to allow bilinear
+interpolation and for derivatives at the domain edge.
+
+FCA Modes
+=== =====
+
+The total cost function to be minimized is J = Jb + Jo + Jc.  The
+three components correspond to background, observations, and
+constraints on the adjustments.
+
+c * Definition of FCA modes
+
+c We define four modes of operation wrt to the FCA technique
+
+c 0. fca_none: fca_mode=0
+c    This is the standard problem with no fca.
+c    The control vector x = (u,v). 
+c    Jb compares (u5,v5) to (u0,v0).
+c    The adjustment winds and the adjusted winds are not present.
+c    Conceptually (du5,dv5)=0, so (ua5,va5)=(u0,v0).
+
+c 1. fca_only: fca_mode=1
+c    An analysis based on fca only.
+c    The control vector x = (du,dv). 
+c    Jb = 0 (or is absent) since the analysis is the adjusted wind.
+c    Jc compares (du,dv) to (0,0).
+c    Conceptually (u5,v5) = (ua5,va5).
+
+c 2. fca_too: fca_mode=2
+c    A combined data analysis including fca and analysis increments.
+c    The control vector x = (u,v,du,dv). 
+This is the only mode in which the control vector is longer.
+c    Jb compares (u5,v5) to (ua5,va5), but (ua5,va5) depend on (du,dv).
+c    Jc compares (du,dv) to (0,0).
+
+c 3. fca_val: fca_mode=3
+c    Use fca for validation: match analysis and background using fca.
+c    The control vector x = (du,dv). 
+c    Jb compares (u5,v5) to (ua5,va5).
+c    Jc compares (du,dv) to (0,0).
+c    In this mode (u5,v5) is fixed and Jo is absent.
+
+fca_mode.EQ.3 does not require any obs data!
+
+From the input location (in radians: lonr, latr) the source location
+is calculated from the adjustment wind (in m/s: du, dv) as follows.
+      lon  = lonr + coslat*du *tfactor*m2rad
+      lat  = latr + dv *tfactor*m2rad
+Here tfactor = 60 * 60 (one hour) and m2rad = pi/(111*1000*180)
+converts meters to radians.
+
+fca_mode is set in namelist /gridops/.  Current fca_grid_mod contains
+a TEST subroutine that includes
+
+      NAMELIST /fca/ start, gridstats, report_faults, tfactor
+c     start      if true set things up, else finish
+c     gridstats  calculate and display gridstats
+c     report_faults report out of bounds
+c     tfactor    time interval to apply adjustment winds
+
+start is now inoperative, gridstats reports basic statistics for u0,
+du5, and ua5, report_faults turns on reporting of source points
+outside of the domain, and tfactor provides a way to scale the
+adjustment winds.  Constant extrapolation is used for points outside
+of the domain.
+
+This test routine could use some cleaning up, but provides a hook to
+do some experiments for now.
+
+CALCulate cost function or minimimum
+========= ==== ======== == =========
+
+CALCulates the cost function if minimize is .FALSE. otherwise
+determines the minimum of the cost function.
+(See solve_mod.f for details.)
+
+In the printed output the sum of weights, W, is defined so that the
+sum of squares divided by W, SS/W, is a mean square error for both
+obs functionals and to the other functionals which are integrals over
+the domain.
+
+The total cost function is the sum of up to 20 individual terms,
+grouped together into Jb, Jo, and Jc.  Each is multiplied by a lamda
+weight defined by namelist /solve/.  Here is the numbering scheme
+used in the namelist:
+
+c Background term indices
+c!#~   ibVWM     index of component for previous forecast
+c!#~   ibLAP     index of component for J2 filter
+c!#~   ibDIV     index of component for divergence
+c!#~   ibVOR     index of component for vorticity 
+c!#~   ibDYN     index of component for (D/DT) of vorticity
+c!#~   ibDDDT    index of component for (D/DT) of divergence
+      INTEGER, PARAMETER :: ibVWM=1, ibLAP=2, ibDIV=3, ibVOR=4,
+     &     ibDYN=5,ibDDDT=6
+
+c Constraint term indices
+c!#~   icVWM     index of component for previous forecast
+c!#~   icLAP     index of component for J2 filter
+c!#~   icDIV     index of component for divergence
+c!#~   icVOR     index of component for vorticity 
+c!#~   icDYN     index of component for (D/DT) of vorticity
+c!#~   icDDDT    index of component for (D/DT) of divergence
+c!#~   icons     list of lamdas in namelist for Jc
+c!#~   jcons     list of lamdas ordered for use in jb_mod for Jc
+      INTEGER, PARAMETER :: icVWM=7, icLAP=8, icDIV=9, icVOR=10,
+     &     icDYN=11,icDDDT=12
+
+c Obs operator indices
+c!#~   ioCONV    index of component for conventional data
+c!#~   ioSSMI    index of component for SSMI data
+c!#~   ioTMI     index of component for TMI data
+c!#~   ioAMSR    index of component for AMSR data
+c!#~   ioUNIQ    index of component for unique wind data
+c!#~   ioAMB     index of component for ambiguous wind data
+c!#~   ioSPD     index of component for velocity magnitude
+c!#~   ioNRCS    index of component for sigma0 data
+      INTEGER, PARAMETER :: ioCONV=13, ioSSMI=14, ioTMI=15,
+     &    ioAMSR=16, ioUNIQ=17, ioAMB=18, ioSPD=19, ioNRCS=20
+
+c     Sums of squares components, weights, etc.
+c!#~   nsos      number of sums of squares components
+c!#~   lamda     lamda weight for each component
+c!#~   lscale    dimensional scale for each component
+c!#~   rmsg      rms gradient for each component and total
+c!#~   sosc      sum of squares (SS) for each component and total
+c!#~   norm      sum of weights (W) or total area for each component
+c!#~   norm.     It is defined such that SS/W is a mean square error
+c!#~   norm..    (scaled by lscale)
+c!#~   slamda    scaled lamda weights (=lamda*lscale)
+      INTEGER, PARAMETER :: nsos=2*mback + m_obs
+c     These are namelist parameters:
+      REAL, SAVE, DIMENSION(nsos) :: lamda=-1, lscale
+
+c     Set defaults for weight parameters
+      IF (lamda(1).LT.0) THEN
+        lamda(:)  = 0.0
+        lscale(:) = 1.0
+        lscale( (/ibVWM, icVWM/) ) = (10.)**(-10)
+        lscale( (/ibLAP, icLAP/) ) = (10.)**(+10)
+        lscale( (/ibDYN, icDYN/) ) = (10.)**(+8)
+        lscale((/ibDDDT, icDDDT/)) = (10.)**(+8)
+      END IF
+
+c!# Namelist input:
+      REAL, SAVE :: fcrit=1E-3, eps=1E-6
+      INTEGER, SAVE ::  maxfn=25, mdim=6, iprint(2)
+      DATA iprint/-1,0/
+      LOGICAL :: minimize
+      NAMELIST /input/ lamda, lscale, fcrit, eps, maxfn, mdim, iprint,
+     &    minimize
+c     !#~   minimize  should the obs function be minimized?
+c     !#~   minimize.  (otherwise evaluate it only)
+c     !#~   maxfn     maximum function calls allowed
+c     !#~   mdim      number of work vectors allowed for VA15AD
+c     !#~   iprint    controls printout from VA15AD
+c     !#~   fcrit     critical fraction of sos reduction needed for restart
+c     !#~   eps       stopping parameter for VA15AD 
+c     IF (GNORM/XNORM .LE. EPS) FINISH=.TRUE.
+c where GNorm (XNorm) is the magnitude of the gradient (control vector).
+
+FGAT processing
+==== ==========
+
+The FGAT procedure defines the parameters u_fgat, v_fgat, and alpha
+for each observation.  These parameters are needed if the vam is to
+use the FGAT.  If the vam is not using the FGAT, then the
+pre-processing routines should set u_fgat=0, v_fgat=0, and alpha=1.
+(See fgat_add_mod.f for details.)
+
+The namelist variables t2 and dt must be in the same time coordinate
+system as obs_data%time.  Defaults are for time in seconds from the
+central analysis time and six hours between analyses.
+The namelist variables times(3) and dates(3) define the synoptic
+times of the three gridded data sets needed to define u_fgat, v_fgat,
+and alpha.  These must correspond to t2 and dt, but no checking is
+done here of this correspondence.  The variables times and dates must
+match the gridded data sets that are read.
+c!# fgat namelist
+      REAL, SAVE :: t2=0, dt=6*60*60
+      INTEGER, SAVE, DIMENSION(3) :: dates=0, times=0
+      LOGICAL :: quadratic, analysis, vprint, initialize
+      NAMELIST /interp/ t2, dt, dates, times,
+     &    quadratic, analysis, initialize, vprint
+c!#~  t2         time of central analysis
+c!#~  dt         time increment between analyses
+c!#~  dates      analyses dates
+c!#~  times      analyses times
+c!#~  quadratic  quadratic interpolation in time?
+c!#~  analysis   time interpolation thru analysis?
+c!#~  initialize only reset fgat variables?
+c!#~  vprint     verification print out?
+
+If initialize is .TRUE. then the fgat observation variables are reset:
+u_fgat=0, v_fgat=0, and alpha=1, and nothing else is done.  Otherwise:
+
+After namelist interp is read, vam_grid is automatically called three
+times in order to read in the data sets containing the gridded fields
+corresponding to dates and times.  This means that namelist interp
+will be followed by three pairs of gridop and grid namelists.  The
+order in which the three gridded fields is immaterial to FGAT, but if
+the central time data set is read last it will be saved so that it
+will not be necessary to define the vam grid.  Usually you will want
+to use copyback .TRUE. in this case.
+
+A minimal sequence including FGAT would be to read in all desired data
+with OBS, determine FGAT parameters and read in a background field
+with FGAT, perform an analysis with CALC, and then write out the
+analysis with GRID.
+
+INITialization
+==============
+
+Information for initialization is only needed for defining the model
+function when using backscatter observations.
+
+(See s0_init_mod.f for details and for definition of the model
+function data sets.)
+
+c!#~   iJoCalc   Method to calculate loss functional
+c!#~   iJoCalc.  (1=>Sum of squares,2=>MLE,>0=>Calculate)
+c!#~   jDebug    Debug output increment (0=>none)
+      integer, public :: iJocalc=2, jdebug=0
+
+      character (len=len_fname) :: filename, indir
+      integer, parameter :: max_modfns=20
+      integer :: modfns(max_modfns), interp_order
+      logical :: more, vprint
+      namelist /s0init/ filename, indir, modfns, interp_order,
+     &     iJocalc, jdebug, more, vprint
+
+         interp_order = -1	!#use file defaults
+         modfns(:) = -1		!#use file defaults
+         
+Key values
+=== ======
+
+Physical constants are stored in constants.f.  These include
+
+c!#   Numerical constants:
+c!#~   pi        half circumfrence of unit circle
+      REAL, PUBLIC, PARAMETER ::  pi=3.1415926535897932D0
+
+c!#   Physical constants: 
+c!#~   a         radius of earth (meters)
+      REAL, PUBLIC, PARAMETER :: a = 6371 * 1000
+c!#~   omega     rotation rate of earth (radians/sec)
+      REAL, PUBLIC, PARAMETER :: omega = 7.292D-5
+
+I/O:
+c!#~   iuvam     reserved i/o unit for vam file operations.
+      INTEGER, PARAMETER :: iuvam=8
+
+c!#   Maximum string lengths:
+      INTEGER, PARAMETER :: len_name=10, !#for names in obs_data_typ
+     &     len_fname=255        !#for file names (throughout the VAM)
+
+c!#   Number and names of supported observation types
+c!#   this must agree with the id stored in the input files
+      INTEGER, PARAMETER :: n_obsids=7
+      CHARACTER (len_name) :: names_obsid(n_obsids) =
+     &     (/'convention','ambiguous ','sigma0    ',
+     &       'ssmi      ','tmi       ','amsr      ',
+     &       'scatconv  '/)
+c!#   Storage locations of names in array:
+      INTEGER, PARAMETER :: conv_id=1,  amb_id=2, s0_id=3,
+     &     ssmi_id=4, tmi_id=5, amsr_id=6, scatconv_id=7
+
+c Background term indices
+c!#~   ibVWM     index of component for previous forecast
+c!#~   ibLAP     index of component for J2 filter
+c!#~   ibDIV     index of component for divergence
+c!#~   ibVOR     index of component for vorticity 
+c!#~   ibDYN     index of component for (D/DT) of vorticity
+c!#~   ibDDDT    index of component for (D/DT) of divergence
+      INTEGER, PARAMETER :: ibVWM=1, ibLAP=2, ibDIV=3, ibVOR=4,
+     &     ibDYN=5,ibDDDT=6
+
+c     Use of vector subscript iback maps lamda ordering
+c     to that needed in jb_mod.
+c!#~   mback    number of lamdas in namelist for Jb and Jc
+c!#~   nback    number of lamdas used in jb_mod
+c!#~   iback    list of lamdas in namelist for Jb
+c!#~   jback    list of lamdas ordered for use in jb_mod for Jb
+      INTEGER, PARAMETER :: mback=6, nback=8
+      INTEGER, PARAMETER, DIMENSION(mback) ::
+     &    iback=(/ibVWM,ibLAP,ibDIV,ibVOR,ibDYN,ibDDDT/)
+      INTEGER, PARAMETER, DIMENSION(nback) ::
+     &    jback=(/ibVWM,ibVWM,ibDIV,ibVOR,ibLAP,ibLAP,ibDYN,ibDDDT/)
+c!# ***************************************************************************
+c!#   NOTE: jback and jcons must agree with the delu, delv, div etc
+c!#   parameters in jb_mod for proper indexing of the lamda values.
+c!# ***************************************************************************
+
+c Constraint term indices
+c!#~   icVWM     index of component for previous forecast
+c!#~   icLAP     index of component for J2 filter
+c!#~   icDIV     index of component for divergence
+c!#~   icVOR     index of component for vorticity 
+c!#~   icDYN     index of component for (D/DT) of vorticity
+c!#~   icDDDT    index of component for (D/DT) of divergence
+c!#~   icons     list of lamdas in namelist for Jc
+c!#~   jcons     list of lamdas ordered for use in jb_mod for Jc
+      INTEGER, PARAMETER :: icVWM=7, icLAP=8, icDIV=9, icVOR=10,
+     &     icDYN=11,icDDDT=12
+
+c These are exactly analogous to those for the background term
+      INTEGER, PARAMETER, DIMENSION(mback) ::
+     &    icons=(/icVWM,icLAP,icDIV,icVOR,icDYN,icDDDT/)
+      INTEGER, PARAMETER, DIMENSION(nback) ::
+     &    jcons=(/icVWM,icVWM,icDIV,icVOR,icLAP,icLAP,icDYN,icDDDT/)
+
+c Obs operator indices
+c!#~   ioCONV    index of component for conventional data
+c!#~   ioSSMI    index of component for SSMI data
+c!#~   ioTMI     index of component for TMI data
+c!#~   ioAMSR    index of component for AMSR data
+c!#~   ioUNIQ    index of component for unique wind data
+c!#~   ioAMB     index of component for ambiguous wind data
+c!#~   ioSPD     index of component for velocity magnitude
+c!#~   ioNRCS    index of component for sigma0 data
+
+c     Use of vector subscript iback maps lamda ordering
+c     to that needed in jb_mod.
+c!#~   m_obs    number of lamdas in namelist for Jo
+c!#~   n_obs    number of lamdas used in vam_obs_mod
+c!#~   i_obs    list of lamdas in namelist for Jo
+c!#~   j_obs    list of lamdas ordered for use in vam_obs_mod
+      INTEGER, PARAMETER :: ioCONV=13, ioSSMI=14, ioTMI=15,
+     &    ioAMSR=16, ioUNIQ=17, ioAMB=18, ioSPD=19, ioNRCS=20
+      INTEGER, PARAMETER :: m_obs=8, n_obs=7
+      INTEGER, PARAMETER, DIMENSION(m_obs) :: i_obs = (/ioCONV,
+     &    ioSSMI, ioTMI, ioAMSR, ioUNIQ, ioAMB, ioSPD, ioNRCS/)
+      INTEGER, PARAMETER, DIMENSION(n_obs) :: j_obs =
+     &    (/ioCONV, ioAMB, ioNRCS, ioSSMI, ioTMI, ioAMSR, ioUNIQ/)
+      REAL, DIMENSION (n_obs) :: norm_obs
+c!# ***************************************************************************
+c!#   NOTE: j_obs must order the lamda values to agree with names_obsid
+c!#   in vam_obs_mod for proper indexing.
+c!# ***************************************************************************
+
+c     Sums of squares components, weights, etc.
+c!#~   nsos      number of sums of squares components
+c!#~   lamda     lamda weight for each component
+c!#~   lscale    dimensional scale for each component
+c!#~   rmsg      rms gradient for each component and total
+c!#~   sosc      sum of squares (SS) for each component and total
+c!#~   norm      sum of weights (W) or total area for each component
+c!#~   norm.     It is defined such that SS/W is a mean square error
+c!#~   norm..    (scaled by lscale)
+c!#~   slamda    scaled lamda weights (=lamda*lscale)
+      INTEGER, PARAMETER :: nsos=2*mback + m_obs
+c     These are namelist parameters:
+      REAL, SAVE, DIMENSION(nsos) :: lamda=-1, lscale
+c     These are calculated by solve:
+      REAL, DIMENSION(nsos+1) :: rmsg, sosc
+      REAL, DIMENSION(nsos) :: norm, slamda
+
+c!#~   ctitle    short title for each component
+      CHARACTER*20, PARAMETER, DIMENSION(nsos+1) :: ctitle = (/
+     1    'Jb:   Prior estimate',
+     2    'Jb:        J2 filter',
+     3    'Jb:       Divergence',
+     4    'Jb:        Vorticity',
+     5    'Jb:   D/DT vorticity',
+     6    'Jb:  D/DT divergence',
+     7    'Jc:   Prior estimate',
+     8    'Jc:        J2 filter',
+     9    'Jc:       Divergence',
+     &    'Jc:        Vorticity',
+     1    'Jc:   D/DT vorticity',
+     2    'Jc:  D/DT divergence',
+     3    'Jo:  Ship+buoy winds',
+     4    'Jo:      SSMI speeds',
+     5    'Jo:       TMI speeds',
+     6    'Jo:      AMSR speeds',
+     7    'Jo:     Unique winds',
+     8    'Jo:  Ambiguous winds',
+     9    'Jo:      SCAT speeds',
+     &    'Jo:        NRCS (S0)',
+     1    '               Total' /)
+ 
+Names used in data sets:
+Ambiguous winds:
+      character (len=len_name), private, parameter :: u_name='u_wind',
+     &    v_name='v_wind', dfac_name='dfac'
+
+Conventional winds
+      character (len=len_name), private, parameter :: u_name='u_wind',
+     &     v_name='v_wind'
+
+SSMI speeds
+      CHARACTER (LEN=len_name), PRIVATE, PARAMETER :: Vel_name='speed'
+
+Backscatter data
+    character (len=len_name), private, parameter ::
+c!# Constants:
+     &     satid_name='satid',	!#
+     &     modfn_name='modfn',	!#
+     &     sdcalc_name='sdcalc',	!#
+     &     ndcalc_name='ndcalc',	!#
+     &     kpm2_name='kpm2',	!this may instead be computed on the fly!#
+c$$$     &     s0c_name='sigma0-c',	!#
+c!# Variables:
+     &     polar_name='hv-polar',	!#hor/vert polarization
+     &     incid_name='incidence',	!#incidence angle
+     &     azim_name='azimuth',		!#azimuth angle
+     &     s0_name='sigma0',	!#
+     &     kpa_name='kpa',	!#
+     &     kpb_name='kpb',	!#
+     &     kpc_name='kpc'	!#
+

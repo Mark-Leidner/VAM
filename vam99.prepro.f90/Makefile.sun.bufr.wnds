@@ -1,0 +1,26 @@
+
+# Makefile for BUFR -> text conversion software
+
+#FC = f77-5.0
+FC = f90
+TARGET = reformat_qscat_bufr
+
+OBJ = reformat_qscat_bufr.o \
+      scan_bufr.o \
+      newpbio.o \
+      pbbufr.o \
+      gbyte.o \
+      readprod.o \
+      fort2c.o \
+      bufrdc.o \
+      map_bufr2mgdr.o \
+      write_qscat25km_row.o \
+      write_derived_data.o \
+      winds.o \
+      obsio.o
+
+$(TARGET) : $(OBJ)
+	$(FC) -o $@ $(OBJ)
+
+clean :
+	\rm -f $(TARGET) $(OBJ)

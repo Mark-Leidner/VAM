@@ -1,0 +1,64 @@
+c!#   $Id: vordiv.F,v 1.2 1997/02/12 19:19:28 leidner Exp $
+c!#   $Log: vordiv.F,v $
+c!#   Revision 1.2  1997/02/12 19:19:28  leidner
+c!#   all include files changed to *.h
+c!#
+c!#	Revision 1.1  1997/02/10  16:39:08  leidner
+c!#	Initial revision
+c!#
+      SUBROUTINE VORDIV
+#include "vam.h"
+C***********************************************************************
+C*****VORDIV CALCULATES VORTICITY AND DIVERGENCE FOR ANALYSIS GRID
+C*****AND PLOT ON PRINTER
+C-----SPECIFICATIONS
+C-----XREFS:
+C-----USER : ERRSEA PLOTDV ...... ...... ...... ...... ...... ......
+C-----FORT : FRDNL# FWRNL# IBCOM# ...... ...... ...... ...... ......
+#include "gparm.h"
+#include "grdta.h"
+      DATA SCALEV/1D-5/,SCALED/1D-5/,DINTER/2D0/,VINTER/2D0/
+      DATA IPRINT/0/,IPLOT/1/
+      NAMELIST /INPUT/ SCALEV,SCALED,IPRINT,IPLOT,DINTER,VINTER
+      IF (NGRDPT.LE.0) CALL ERRSEA (513,6HVORDIV)
+C-----ZERO OUT TOP AND RIGHT BOUNDARIES
+      DO 10 I=IP,IPMAX
+      DELSSU(I,JPMAX)=0
+      DELSSV(I,JPMAX)=0
+   10 CONTINUE
+      DO 20 J=JP,JPMAX
+      DELSSU(IPMAX,J)=0
+      DELSSV(IPMAX,J)=0
+   20 CONTINUE
+      WRITE (6,101) NAME
+  101 FORMAT ('0VORTICITY AND DIVERGENCE CALCULATION FOR GRID ',A8/)
+      READ (30,INPUT,END=1520,ERR=1520)
+      WRITE (6,INPUT)
+C-----CALCULATION IS OVER INTERIOR OF PLOT AREA
+C-----FOR X PERIODICITY GRID MAY OVERLAP
+      IP1=IPMAX-1
+      JP1=JPMAX-1
+C-----LOOP THRU LATITUDES
+      DO 100 L=JP,JP1
+C-----LOOP THRU LONGITUDES
+      DO 50 K=IP,IP1
+C-----DIVERGENCE STORED IN DELSSU
+      DELSSU(K,L) = ADIV(L)*(U(K+1,L+1) + U(K+1,L) - U(K,L+1) - U(K,L))
+     +  + BDIV(L)*(V(K+1,L+1) + V(K,L+1)) - CDIV(L)*(V(K+1,L) + V(K,L))
+C-----VORTICITY STORED IN DELSSV
+      DELSSV(K,L) = ADIV(L)*(V(K+1,L+1) + V(K+1,L) - V(K,L+1) - V(K,L))
+     +  - BDIV(L)*(U(K+1,L+1) + U(K,L+1)) + CDIV(L)*(U(K+1,L) + U(K,L))
+C-----DEBUG OUTPUT
+C=====WRITE (6,49) K,L,DELSSU(K,L),DELSSV(K,L)
+C==49=FORMAT (1X,2I5,5D20.6)
+   50 CONTINUE
+  100 CONTINUE
+C-----OUTPUT RESULTS
+c     CALL PLOTDV (DELSSU,IDIM,IP,JP,NIP,NJP,SCALED,IPRINT,IPLOT,
+c    +   DINTER,'DIVERGENCE',10,NAME)
+c     CALL PLOTDV (DELSSV,IDIM,IP,JP,NIP,NJP,SCALEV,IPRINT,IPLOT,
+c    +   VINTER,'VORTICITY',9,NAME)
+      RETURN
+ 1520 CALL ERRSEA (520,6HVORDIV)
+      RETURN
+      END

@@ -1,0 +1,1532 @@
+%x Emacs: -*- mode:outline; outline-regexp:"[%\\\\]x+ " -*-
+%  RCS: Id: srs.tex,v 1.6 2004/01/23 17:30:31 rhoffman Exp $
+%  CVS: $Id: srs.tex,v 1.1 2004/01/23 19:33:35 leidner Exp $
+
+\documentclass[11pt]{article}
+\usepackage{times}
+
+%%%: \input{abbrev}
+
+% Favorite abbreviations
+% RCS: Id: srs.tex,v 1.6 2004/01/23 17:30:31 rhoffman Exp $
+\newcommand{\adeos}[1]{{\sc adeos}--{#1}}
+\newcommand{\apriori}{{\em a~priori}}
+\newcommand{\chemical}[1]{\mbox{$\mathrm{#1}$}}
+\newcommand{\computer}[1]{{\tt #1}}
+\newcommand{\Cross}[2]{\Vector{{#1} \times {#2}}}
+\newcommand{\dass}{DASs}
+\newcommand{\das}{DAS}
+\newcommand{\degrees}[1]{\mbox{$ {#1}^\circ $}}
+\newcommand{\Del}{\mbox{$\Delta$}}
+\newcommand{\Dot}[2]{\Vector{{#1} \cdot {#2}}}
+\newcommand{\dpdp}[2]{\mbox{$ \frac{\partial #1}{\partial #2} $}}
+\newcommand{\dvar}[1]{{#1}d-$\!$VAR}
+\newcommand{\eg}{{\em e.g.}}
+\newcommand{\eps}{\mbox{$ \varepsilon $}}
+\newcommand{\ers}[1]{ERS--{#1}}
+\newcommand{\etal}{{\em et~al.}}
+\newcommand{\ETA}{Eta}
+\newcommand{\RSM}{RSM}
+\newcommand{\Expect}[1]{\mbox{$ \langle {#1} \rangle $}}
+\newcommand{\geos}[1]{GEOS--{#1}}
+\newcommand{\glm}[1]{\mbox{$ \lambda_{\mbox{\tiny #1}} $}}
+\newcommand{\gl}[1]{\mbox{$ \lambda_{#1} $}}
+\newcommand{\hrs}[1]{{#1} hours}
+\newcommand{\hr}[1]{{#1} hour}
+\newcommand{\ie}{{\em i.e.}}
+\newcommand{\jason}[1]{{\sc jason}--{#1}}
+\newcommand{\Jm}[1]{\mbox{$ J_{\mbox{\tiny #1}} $}}
+\newcommand{\J}[1]{\mbox{$ J_{#1} $}}
+\newcommand{\K}[1]{\mbox{$ K_{#1} $}}
+\newcommand{\limit}[1]{\mbox{$ {#1}_{\lim} $}}
+\newcommand{\Matrix}[1]{{\bf {#1}}}
+\newcommand{\mb}[1]{\mks{{#1}}{hPa}}
+\newcommand{\mitll}{M.I.T.\ Lincoln Lab}
+\newcommand{\mitparsons}{M.I.T.\ Parsons}
+\newcommand{\mks}[2]{\mbox{$ {#1} \; {#2} $}}
+\newcommand{\nh}{Northern Hemisphere extratropics}
+\newcommand{\NOTE}[1]{{\Large \underline {#1}}}
+\newcommand{\nrad}{NEXRAD}
+\newcommand{\nscat}{NSCAT}
+\newcommand{\Obs}{``Obs''}
+\newcommand{\obs}{``obs''}
+\newcommand{\ph}[1]{Phase~{#1}}
+\newcommand{\qscat}{QuikSCAT}
+\newcommand{\rfs}[1]{R$^{#1}$FS}
+\newcommand{\rms}{{\em rms}}
+\newcommand{\sh}{Southern Hemisphere extratropics}
+\newcommand{\so}{\mbox{$ \sigma^0 $}}
+\newcommand{\ssmi}{SSM/I}
+\newcommand{\sws}{SWS}
+\newcommand{\sw}{SeaWinds}
+\newcommand{\s}[1]{\mbox{$ \sigma^{#1} $}}
+\newcommand{\tenm}{\mks{10}{m}}
+\newcommand{\tp}{Topex-Poseidon}
+\newcommand{\uconn}{U.~Conn.}
+\newcommand{\vam}{VAM}
+\newcommand{\Vector}[1]{\mbox{\boldmath ${#1}$}}
+\newcommand{\wrt}{with respect to}
+\newcommand{\wsi}{WSI}
+
+%%%: ===========================================================
+
+%%%: \input{format}
+
+% Favorite formatting commands
+% RCS: Id: srs.tex,v 1.6 2004/01/23 17:30:31 rhoffman Exp $
+
+\setlength{\textheight}{8.5in}
+\setlength{\textwidth}{6.5in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\topmargin}{0in}
+\setlength{\headsep}{.25in}
+\setlength{\headheight}{.25in}
+
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{3}
+
+\providecommand{\spacing}[1]{\renewcommand{\baselinestretch}{#1}\small\normalsize}
+\providecommand{\doublespacing}{\spacing{1.5}}
+\providecommand{\normalspacing}{\spacing{1.0}}
+\newcommand{\tbox}[1]{\begin{tabular}{c} #1 \end{tabular}}
+\newcommand{\ylab}[1]{\tbox{\rotatebox{90}{#1}}}
+
+\newcommand{\xx}[1]{\section {#1}}
+\newcommand{\xxx}[1]{\subsection {#1}}
+\newcommand{\xxxx}[1]{\subsubsection {#1}}
+\newcommand{\xxxxx}[1]{\paragraph {#1}}
+\newcommand{\xxxxxx}[1]{\subparagraph {#1}}
+
+\newcommand{\TBD}[1]{{[\bfseries{\itshape{TBD: }{{#1}}}]}}
+\newcommand{\INPUT}[1]{{\bf [INPUT: {#1}]}}
+%%% \renewcommand{\INPUT}[1]{\normalspacing \input{#1}}
+
+\newenvironment{publist}
+   {\begin{list}{}{ \leftmargin0.25in \itemindent-0.25in } \item {\large \bf Publications}}{\end{list}}	
+
+% For references (e.g. ``... \reference{Daley, 1985}{Dal85}'' 
+%    or ``method of Daley \reference{1985}{Dal85}''
+\newcommand{\reference}[2]{(#1 \cite{#2})}
+% \renewcommand{\reference}[2]{(#1)}
+% \renewcommand{\reference}[2]{\cite{#2}}
+% \renewcommand{\reference}[2]{(#1 [#2])}
+
+\newcommand{\eql}[2]{\begin{equation} \label{eq:#1} #2 \end{equation}}
+\newcommand{\eqr}[1]{(\ref{eq:#1})}
+
+\newcommand{\secl}[1]{\label{sec:#1}}
+%%% \renewcommand{\secl}[1]{{ [Label: {\em{#1}}]}\label{sec:#1}}
+\newcommand{\secr}[1]{\S\,\ref{sec:#1}}
+
+\newcommand{\fcaption}[2]{\caption{\label{fig:#1} {#2}}}
+%%% \renewcommand{\fcaption}[2]{\caption{\label{fig:#1}{\bf[#1]} {#2}}}
+\newcommand{\figr}[1]{Fig.~\protect{\ref{fig:#1}}}
+
+\newcommand{\tcaption}[2]{\caption{\label{tab:#1} {#2}}}
+%%% \renewcommand{\tcaption}[2]{\caption{\label{tab:#1}{\bf[#1]} {#2}}}
+\newcommand{\tabr}[1]{Table~\protect{\ref{tab:#1}}}
+
+\newcommand{\plitem}[2]{\item \plref{{#1}}{{#2}}:}
+\newcommand{\plref}[2]{Page {#1}, Line {#2}}
+
+%%%: ===========================================================
+
+\newcommand{\COMMENT}[2]{{[\bfseries {\itshape #1}: {#2}]}}
+\renewcommand{\TBD}[1]{\COMMENT{TBD}{{#1}}}
+\newcommand{\units}[1]{\mbox{$ [{#1}] $}}
+\newcommand{\vardef}[3]{\item $ {#1} $ is the {#2} $ [{#3}] $. }
+\renewcommand{\apriori}{{\em a~priori}}
+
+\newcommand{\subsc}[2]{\mbox{$ #1_{\mbox{\sc \footnotesize #2}} $}}
+\renewcommand{\Jm}[1]{\subsc{J}{{#1}}}
+\newcommand{\Sm}[1]{\subsc{S}{{#1}}}
+\renewcommand{\glm}[1]{\subsc{\lambda}{{#1}}}
+\newcommand{\Operator}[1]{\mbox{$ \mathcal #1 $}}
+\newcommand{\glmsm}[1]{(\glm{{#1}}/\Sm{{#1}})}
+\newcommand{\bgd}[1]{\mbox{{\rm #1}{\sc bgd}}}
+\newcommand{\lap}[1]{\mbox{{\rm #1}{\sc lap}}}
+\newcommand{\DpDp}[2]{ \frac{\partial #1}{\partial #2} }
+\newcommand{\Scalar}[1]{\mbox{\unboldmath $ {#1} $}}
+
+\begin{document}
+\begin{center}
+	      {\bf Variational Analysis Method (VAM)\\}
+	   {\it Software Requirements Specification (SRS)\\ ~ \\
+			       \today \\ ~ \\
+	       Ross N. Hoffman and S. Mark Leidner\\ }
+			     \vspace{2cm}
+\end{center}
+
+\xx {Introduction}
+
+The \vam\ was introduced by Hoffman \reference{1982}{Hof82} to analyze
+Seasat scatterometer (SASS) data.  In this first formulation only
+\obs\ data from conventional platforms (ships, buoys, radiosondes) and
+from SASS were combined with an \apriori\ background analysis.  The
+\vam\ was extended to include smoothness constraints and a dynamical
+constraint by Hoffman \reference{1984, hereafter Hof84}{Hof84}.  The
+\vam\ was further extended to \ssmi\ wind magnitude data by Atlas \etal\
+\reference{1996}{AtlHB+96}.
+
+More recently the \vam\ has undergone several developments.  These
+include:
+ \begin{itemize}
+  \item Optional use of 12 point bicubic interpolation to the \obs\ locations.
+  \item Use of \ssmi\ line-of-sight winds.
+  \item Use of \ers1,2 \s0 values.
+  \item Use of \nscat\ \s0 values.
+  \item Reformulation and unification of the constraint terms.
+  \item Translation to \computer{f90}.
+ \end{itemize}
+ For both \ers1,2 and \nscat, in addition to the possibility of
+analyzing \s0 data, the ambiguities may be treated as SASS data and
+unique winds may be treated as buoy \obs.
+
+The main function of the \vam\ is to determine a ``best'' surface wind
+analysis.  The analysis is ``best'' in terms of minimizing a cost
+function.  The precise order of the steps taken in the \vam\ is
+flexible and the subject of ongoing tuning.  The nominal and minimal
+setup is to:
+ \begin{enumerate}
+  \item Define the geometry of the analysis grid, and on this grid
+define the background wind field (possibly reading it and regridding it).
+  \item The inital guess for the analysis is set equal to the
+background.
+  \item Read the \obs\ data sets, making necessary conversions and
+preforming gross quality control (QC). 
+  \item QC the \obs\ based on the simulated values from the background.
+  \item Minimize the cost function.  This will generally require many
+evaluations of the cost function and its gradient.
+  \item Write the analysis wind field and simulated \obs\ values from
+the analysis.
+ \end{enumerate}
+
+Note that simulating values from the analysis is a basic part of
+evaluating the cost function.  Thus a side effect of evaluating the
+cost function (and therefore of performing the minimization) is to
+simulate the \obs.  For this to be reliable, even \obs\ values for
+data rejected by the QC should be simulated, although they are not
+included in the cost function.
+ \Obs\ failing the gross QC should not be included in the data
+structures at all.
+ Before writing any data set it is important to re-evaluate the cost
+function, since some minimization routines do not have a last
+evaluation at the optimal point found.
+
+This basic operation may be modified in several ways.
+ \begin{itemize}
+  \item The initial guess may be an arbitray wind field, which may
+need regridding.
+  \item After a preliminary analysis, the analysis can be regridded to
+a finer grid.  The minimization might then restart.
+  \item After a preliminary analysis, all data may be subjected to a
+second QC.  This accepts some of the data which were initially rejected
+but are corroborated by near-by data.  The minimization might then
+restart.  In practice the QC is always \wrt\ the analysis.  For
+background QC the analysis must be equal to the background.
+ \end{itemize}
+
+ We attempt to define every symbol $x$ using the format:
+ \begin{itemize}
+  \vardef{x}{\em definition}{mks}
+ \end{itemize} 
+ For dimensionless quantities we will denote sets by $\Omega$, members
+of sets by $\omega$, real numbers by $\pm 1.0$, non-negative real
+numbers by $+ 1.0$, integers by $\pm 1$, and non-negative integers by
+$+1$.
+
+\xxx {Restrictions and warnings}
+
+ \begin{enumerate}
+
+\item Extensions for the geographic poles are included in this
+document, but are not part of the basic VAM.  For ocean wind analysis,
+we can always choose a domain which excludes the poles.
+
+\item Data which are constant \wrt\ the minimization are stored in
+structures which are used directly by the cost function, without being
+passed through the minimization.  This is done to avoid making changes
+to library minimization routines which do not offer so called
+``reverse control''.
+
+\item Results are generally not reproducible at the bit level as the
+minimization is affected by differences in rounding which arise due to
+changes in ordering of arithmetic operations.
+
+\item Multiple solutions are possible, especially when analyzing
+ambiguous data.  Minor changes can result in finding a completely
+different solution.
+
+\item Accumulators for the various sums should be 64-bit or better.  They
+are declared as \computer{REAL*8}.
+
+\item If we change the density of the data we should change the \gl{i}
+weights.  For example, to keep the importance of other data the same
+while changing the density of the \ssmi\ data, keep $ \glm{ssmi}
+\subsc{N}{ssmi} $ constant.
+
+\item If we change the resolution of our analysis, we should change the
+lambda weights.  For a higher resolution analysis we should decrease
+the filter weights.  Smaller filter weights should result in smaller
+scale features in our analysis-background fields.
+
+(Note that going from \degrees{2 \times 2.5} to \degrees{1 \times 1}
+with the same lambda weights makes a difference because of finite
+difference errors.  However going from \degrees{1 \times 1} to
+\degrees{0.5 \times 0.5} with the same lambda weights should make only
+minor differences.)
+
+\item We occasionally note very large isolated analysis increments at
+grid points adjacent to a swath of scatterometer data.  This is
+probably a Gibb's phenomena and is usually only noticed at relatively
+coarse resolution such as \degrees{2 \times 2.5}.  When it appears, it
+can be greatly reduced by using higher resolution (i.e., more grid
+points, but the same \gl{} weights.)
+
+Note: The Gibb's phenomena occurs when the gradient of data density is
+large, and the gradient of vector wind increments is large but of
+opposite sign.  Can we add another penalty function to control this
+more.
+
+ \item We do not explicitly deal with parallelization in this
+document.  However in p685 we proposed in collaboration with Goddard,
+to develop a parallel scalable ocean data assimilation system to be
+used in conjunction with the coupled climate model to analyze {\em
+in~situ} and satellite data.  In P685 we proposed that the 2dVAR
+scheme will be implemented using domain decomposition.  Boundary
+values at the edge of each subdomain are needed for evaluation of the
+background objective functional (due to the forecast error
+correlations between neighboring grid points), and possibly for higher
+order interpolation and/or smoothness constraints.  The independent
+subproblems should converge if they exchange information about their
+respective boundaries at intervals.  Operationally, the minimization
+software applied to the subproblem requires that the boundary
+conditions (BC) be fixed.  The algorithm will restart the minimization
+at intervals for each subproblem with fixed BC, after communication of
+updated boundary information.  Thus to allow for this eventual
+possibility, fixed BC, different from the background must be allowed
+for.
+
+ \end{enumerate}
+
+\xx {Cost function}
+
+The \vam\ analysis is the minimizer of
+ \eql{J}{ J = J_o + J_b + J_c . }
+ Here \begin{itemize}
+  \vardef{J}{total cost function}{+1.0}
+  \vardef{J_o}{\obs\ cost function}{+1.0}
+  \vardef{J_b}{background cost function}{+1.0}
+  \vardef{J_c}{constraint cost function}{+1.0}
+ \end{itemize} 
+
+This is the same starting place as 3dVAR schemes
+\reference{Th\'{e}paut \etal\ 1993}{TheVC+93}.  Wahba and Wendelberger
+\reference{1980}{WahW80} showed that under certain conditions 3dVAR
+and OI are the same so the \vam\ is closely related to OI as well.
+The \vam\ described here is specialized to the 2d ocean surface wind.
+
+The major difference between the \vam\ and 3dVAR is that there is no
+explicit use of background or observational error correlations in the
+\vam.  Instead the \vam\ depends on \J{c} to properly spread the
+influence of the data and on adjustable \gl{} weights to deweight
+correlated data.  Although this part of the formulation of the \vam\
+is very different from standard OI or 3dVAR, analysis results can be
+made similar by appropriate choice of \gl{}.  Thus the \vam\ is a form
+of OI in which the correlations are parameterized with a small number
+of degrees of freedom.  As a result the \vam\ is an ideal candidate
+for on-line estimation of parameters as Dee \etal\
+\reference{1998}{Deed98,DeeGR+99}have proposed.
+
+Single observation experiments with the \vam\ if normalized to have a
+unit response at the \obs\ location are the background error
+correlations with the single \obs.  (This is a very general result:
+Th\'{e}paut \etal\ \reference{1993}{TheHC93} essentially showed this
+for a more complicated situation.)  In experiments based on no tuning
+other than the subjective tuning described by Hof84, the response of
+the \vam\ to a single ship observation is very similar to the response
+of the OI using FNMOC error statistics \reference{Goerss and Phoebus
+1992}{GoeP92} as implemented by Nehrkorn and Hoffman
+\reference{1996}{NehH96}.
+
+In what follows we introduce some redundant notation.  However this
+notation has the effect of unifying the consistency of the parts of
+\J{}.  The additional notation has the effect of simplying
+implementation and maintenance.  For example, all of the integrals
+appearing in the definition of \J{} will be treated uniformly.
+
+Note: Hof84 define the various cost functions as having dimensions of
+$ (m/s)^2 $.  Here we are normalizing everything.
+
+\xxx {Representation of the wind fields}
+
+For the purpose of minimization, we consider \J{} to be a function of
+\Vector{X}, which is known as the control variable.  We must be able
+to map the control variables to a complete gridded wind field.  That is
+ \eql{map}{\Vector{U} = \Operator{M}(\Vector{X}) . } 
+ Here \begin{itemize}
+  \vardef{\Vector{U}}{gridded wind analysis}{m/s}
+  \vardef{\Operator{M}}{mapping operator from control variables to gridded winds}{m/s}
+  \vardef{\Vector{X}}{control variable vector}{m/s}
+ \end{itemize} 
+  Nominally \Vector{U} is the \mks{10}{m} neutral stability wind
+field.  All observed winds should be translated into a \mks{10}{m}
+neutral stability wind.  The control variables might contain grid
+point wind components, spectral coefficients of analysis increments,
+or some other representation of the wind fields.  In one sense
+\Vector{X} must be complete, however any constant auxillary
+information may be used by \Operator{M}.
+
+In the current formulation \Vector{X} contains the values of wind
+components $(u,v)$ which are free to vary and which are independent.
+Some points in the gridded wind field are not independent.
+In a global field points at \degrees{0} and \degrees{360} are the same.
+Not all points in the gridded wind fields are allowed to vary.  If
+there are fixed points, they are not part of the control
+vector.  The fixed points are nominally set equal to the background,
+but in general they are arbitrary.  In particular for multiprocessing
+a large domain the fixed points may be obtained via communication with
+another process at intervals.
+
+The grid is specified in terms of longitude and latitude denoted for
+convenience by the variables $x$ and $y$.  The usual setup is to
+evaluate all the functionals over a rectangular region in $x$ and $y$.
+However the data acceptance window for evaluating the \J{o} and the
+integration domain for evaluating the \J{b} and \J{c} may be specified
+individually.  (In fact one could specify these domains individually
+for each component of these cost functions.)  The starting point for
+defining the grid is the integration domain.
+
+For both $x$ and $y$ there is a starting location, an increment and a
+number of grid boxes.  These grid boxes are numbered from 1 to $n$ and
+the corresponding grid points are numbered from 0 to $n$.
+
+ \TBD{Add a picture.}
+
+To evaluate some of the finite difference operators and to allow
+higher order horizontal interpolation, a boundary zone is added to the
+grid.  Since we use simple centered finite differences, the width of
+the boundary zone, $n_w$, is ordinarily one.  The grid point indices
+therefore run from $-n_w$ to $n+n_w$, and the boundary grid boxes are
+$ -n_w+1, \cdots, 0, n+1, \cdots, n+n_w $.  Grid points 0 and $n$ at
+the integration boundary may be either active or passive, i.e. allowed
+to vary during the minimization or held fixed.  If they are held fixed
+they are part of the boundary.
+
+The domain may be periodic in the $x$ direction.  In this case grid
+points $i$ and $i+n_p$ are the same, where $\delta x n_p = 2 \pi$.
+
+The domain may not presently include pole points.  If the /vam/ was
+extended to include the poles, the indices of the $y$ grid points
+corresponding to the poles would have to specified.
+
+To summarize, the grid parameters are
+ \begin{itemize}
+  \vardef{x_s}{starting $x$ coordinate}{radians}
+  \vardef{\delta x}{increment for $x$ coordinate}{radians}
+  \vardef{n_x}{number of $x$ grid boxes in integration domain}{+1}
+  \vardef{y_s}{starting $y$ coordinate}{radians}
+  \vardef{\delta y}{increment for $y$ coordinate}{radians}
+  \vardef{n_y}{number of $y$ grid boxes in integration domain}{+1}
+  \vardef{n_w}{number of grid boxes in boundary zone}{+1}
+  \vardef{n_p}{number of $x$ grid boxes equal to $2\pi$}{+1}
+  \vardef{n_b}{indicator of a fixed integration boundary}{+1}
+   We restrict $n_b \in \{0,1\}$. If $n_b = 1$ the integration
+boundary grid point values are fixed.
+ \end{itemize} 
+
+With the grid specified in this way we can describe the operator
+\Operator{M}.  In simple terms the fixed points of the grid are held
+constant or reset to their fixed values.  All other values are copied
+from locations in \Vector{X} to locations in \Vector{U}.  Therefore
+\Vector{X} may be taken to be the concatenation of portions of the
+gridded wind component arrays which have been reshaped into vectors.
+The relevant portions are free to vary and do not extend beyond one
+period in the $x$ direction.  If the grid is periodic some values may
+be copied twice.
+
+Note: The data acceptance window is normally specified to be the
+integration domain, but may be any region of the grid for which the
+horizontal interpolation operator is defined.  This is assured if the
+data acceptance window is interior to a boundary zone of at least $n_w
+= 1$.
+
+Note: The coordinates of the analysis are latitude and longitude, but
+we should allow as much as possible for an arbitrary choice of North
+Pole.  For example, for processing a single swath, we might choose the
+equator to follow the swath.  In this case the Coriolis parameter must
+be defined on the grid.
+
+Note: A spectral representation would allow for greater ease (perhaps)
+in specifying the background error correlations and would make the
+control variable vector smaller.  However the greatest part of the
+computation is the calculation of the \obs\ functions.
+A double sine series or spherical harmonic representation might be
+used depending on the analysis domain.
+
+Note: Eventually we wish to include feature calibration and alignment
+(FCA) \reference{Hoffman and Grassotti 1996}{HofG96}.  In this case
+the control variables vector will include components to specify the
+displacements and amplitude or bias corrections of the FCA approach.
+
+\xxx {\Obs\ operators}
+
+In the \vam, the misfit between data and analysis is measured by a
+objective function defined as a sum of squared errors over all data
+locations.  A multiplying factor, called a lambda weight and denoted
+by \gl{}, is defined for each objective function and controls how much
+each function contributes to the total objective function.  We expect
+the minimizing analysis to fit the data more closely for a given data
+type as the lambda weight for that data type is increased.
+
+The total \obs\ function, \J{o} is the weighted sum of individual
+\obs\ operators for each data class,
+ \eql{Jo}{ \begin{array}{ccl}
+  J_o & = & \glm{ship} \Jm{ship} + \glm{buoy} \Jm{buoy} + 
+  \glm{nscat} \Jm{nscat} + \cdots , \\ & & \\
+      & = & \displaystyle \sum_{l \in P} \gl{l} \J{l} . \end{array} }
+ Here \begin{itemize}
+  \vardef{\glm{ship}}{lambda weight for ships}{+1.0}
+  \vardef{\Jm{ship}}{ship \obs\ function}{+1.0}
+  \vardef{\glm{buoy}}{lambda weight for buoys}{+1.0}
+  \vardef{\Jm{buoy}}{buoy \obs\ function}{+1.0}
+  \vardef{\glm{nscat}}{lambda weight for \nscat}{+1.0}
+  \vardef{\Jm{nscat}}{\nscat\ \obs\ function}{+1.0}
+  \vardef{P}{set of platform classes}{\Omega}
+  \vardef{l}{one of the platform classes}{\omega}
+  \vardef{\gl{l}}{lambda weight for the $l$th platform class}{+1.0}
+  \vardef{\J{l}}{\obs\ function for the $l$th platform class}{+1.0}
+ \end{itemize} 
+ We might divide ships into special research ships and all others and
+buoys into TAO buoys and all others, or we might lump all these data
+into the conventional platform class.  Similarly we might divide the
+\ssmi\ data depending on the DMSP spacecraft designation (e.g., F8),
+or keep them all together.
+
+Each \J{l} defined in \eqr{Jo} is itself the sum of squares of
+normalized departures for the observations in the $l$th data class,
+ \eql{Jl}{ J_l = \sum_n |z_n|^2 . }
+ For example, for conventional data, for each $n$
+ \eql{z}{ z = \left[\frac{u^o - u^a}{s_u} ,
+                  \frac{v^o - v^a}{s_v}\right] . }
+ Here \begin{itemize}
+  \vardef{n}{observation index}{+1}
+  \vardef{z}{normalized departure for the \obs}{\pm 1.0}
+  \vardef{u^o}{eastward wind component of the \obs}{m/s}
+  \vardef{v^o}{northward wind component of the \obs}{m/s}
+  \vardef{u^a}{analysis eastward wind component at the \obs location}{m/s}
+  \vardef{v^a}{analysis northward wind component at the \obs location}{m/s}
+  \vardef{s_u}{eastward wind component standard deviation of the \obs}{m/s}
+  \vardef{s_v}{northward wind component standard deviation of the \obs}{m/s}
+ \end{itemize}
+ Normally, $ s_u = s_v $ is a constant for each platform class.
+
+If observational error correlations are known within the data class
+an alternative definition of \J{l} analogous to that used in 3dVAR
+could would be
+ \eql{Jlcorr}{ J_l = \Vector{Z}^T \Matrix{O}^{-1} \Vector{Z}.}
+ Here \begin{itemize}
+  \vardef{\Vector{Z}}{vector of normalized departures}{\pm 1.0}
+   \Vector{Z} would contain an entry for each wind component of each \obs.
+  \vardef{\Matrix{O}}{matrix of observational error correlations}{\pm 1.0}
+ \end{itemize} 
+ Because \eqr{Jlcorr} assumes that \Matrix{O} is the identity matrix, one
+use of \gl{l} is to deweight high spatial density data.
+
+\xxxx {Horizontal interpolation}
+
+The grid point values of the $(u,v)$ wind components are interpolated
+bilinearly to the \obs\ locations.  (That is, $u$ and $v$ are
+separately first in longitude and then in latitude.)
+
+As an option, a 12-point bicubic interpolator based on Ritchie \etal\
+\reference{1995}{RitTS+95}, may be used.
+
+\TBD{Add the equations here.}
+
+\xxxx {Conventional wind \obs}
+
+For the conventional wind \obs\ the normalized departures have been
+given already by \eqr{z}.
+
+\xxxx {Ambiguous wind \obs}
+
+For ambiguous wind vectors the formulation of Hof84 is used.  At each
+WVC, i.e. for each $n$, we define
+ \eql{zsass}{ |z|^2 = \frac{d^2_0}{\subsc{s^2}{ambig}}
+   \prod_{k=1}^{K}[1-\exp(-d_k^2/d_0^2)] , }
+ where
+ \eql{dk}{ d_k^2 = (u^a - u^o_k)^2 + (v^a - v^o_k)^2 , }
+ \eql{d0}{ d_0^2 = d_{00}^{-2} K^{-1} \sum_{k=1}^{K} (u^o_k)^2 + (v^o_k)^2 . }
+ Here \begin{itemize}
+  \vardef{K}{number of ambiguities}{+1}
+  \vardef{k}{index of the ambiguities}{+1}
+  \vardef{u^o_k}{observed eastward wind component for ambiguity $k$}{m/s}
+  \vardef{v^o_k}{observed northward wind component for ambiguity $k$}{m/s}
+  \vardef{d_k}{analysis departure for ambiguity $k$}{m/s}
+  \vardef{d_0}{scaled rms wind magnitude for the \obs}{m/s}
+   The rms is over the $K$ ambiguities.
+   \TBD{We have changed to the mean wind speed in some places.}
+  \vardef{d_{00}}{scale rms wind magnitude}{\mks{2}{m/s}}
+  \vardef{\subsc{s}{ambig}}{wind component standard deviation for the WVC}{m/s}
+ \end{itemize} 
+
+A somewhat similar approach was used by Stoffelen and Anderson
+\reference{1997}{StoA97b} to assimilate \ers1 data.
+
+Note: We plan to reformulate this operator in terms of Tukey's
+function for $(u,v)$ or $(V,D)$.
+
+Note: \subsc{s^2}{ambig} is not included in Hof84.  We have added it
+to nondimensionalize \Jm{ambig}.
+
+\xxxx {Wind speed \obs}
+
+The wind speed operator is designed for \ssmi\ observations and has
+been extended to allow for line-of-sight (LOS) winds as well.
+Formally two separate \J{l} are computed.  For wind speed, for each $n$
+ \eql{zspeed}{ z = \frac{V^o - V^a}{s_V} . }
+ Here \begin{itemize}
+  \vardef{V^o}{wind speed of the \obs}{m/s}
+  \vardef{V^a}{analysis wind speed at the \obs location}{m/s}
+  \vardef{s_V}{wind speed standard deviation of the \obs}{m/s}
+ \end{itemize} 
+
+For LOS wind speed,
+ \eql{zlos}{ z = \frac{\subsc{V^o}{los} - \subsc{V^a}{los}}
+   {\subsc{s}{los}} . }
+ Here \begin{itemize}
+  \vardef{\subsc{V^o}{los}}{LOS wind speed of the \obs}{m/s}
+  \vardef{\subsc{V^a}{los}}{analysis LOS wind speed at the \obs location}{m/s}
+  \vardef{\subsc{s}{los}}{LOS wind speed standard deviation of the \obs}{m/s}
+ \end{itemize} 
+
+In Hof84 a different wind speed functional was introduced.  It is
+equivalent to \eqr{zspeed} if
+ \eql{snV}{ s_V = 1 + d_0 . }
+ Note that this has the effect of giving more weight to low wind speed
+reports. 
+
+\xxxx {Backscatter (\s0) \obs}
+
+For each backscatter \obs, the normalized departure is
+ \eql{zs0}{ z = \frac{(\s0)^o - (\s0)^a}{s_{\s{}}} . }
+ Here \begin{itemize}
+  \vardef{(\s0)^o}{backscatter observation}{\pm 1.0}
+  \vardef{(\s0)^a}{simulated backscatter observation}{\pm 1.0}
+  \vardef{s_{\s{}}}{standard deviation of the \s0 \obs}{+1.0}
+ \end{itemize} 
+
+As indicated the normalized departure is normally calculated in linear
+space, but all the above variables could be specified in $dB$ space if
+the \obs\ errors were better modeled in $dB$ space.
+
+The JPL model for the standard deviation of the \s0 \obs\ is used,
+ \eql{kpJPL}{ s_{\s{}}^2 = K_{pA} (\s0)^2 + K_{pB} \s0 + K_{pC} . }
+ This is used directly for \nscat.  For \ers1,2 the more standard
+formulation
+ \eql{kp}{  s_{\s{}} = K_p \s0 }
+ is specified.  Equation \eqr{kp} is put in the form of \eqr{kpJPL} by
+choosing
+ \eql{kpABC}{ K_{pA} = K_{p}^2, \qquad K_{pB} = K_{pC} = 0. }
+ Here \begin{itemize}
+  \vardef{K_{pA}}{first coefficient in \s0 standard deviation calculation}{+ 1.0}
+  \vardef{K_{pB}}{second coefficient in \s0 standard deviation calculation}{+ 1.0}
+  \vardef{K_{pC}}{third coefficient in \s0 standard deviation calculation}{+ 1.0}
+  \vardef{K_p}{coefficient for \s0 standard deviation}{+ 1.0}
+ \end{itemize} 
+ The \s0 in \eqr{kp} may be the observed value or the simulated
+value.  If the simulated value is used a logarithm term must be added to
+\J{l} to be consistent with maximum likelihood estimation theory.  That
+is we replace $ |z|^2 $ with $ |z|^2 + \ln(s_{\s{}}) $.
+
+\TBD{Missing: refer to uv2SD, model function, table interpolation,
+flowchart or list of the steps: JscCalc calculates speed, and
+direction, sigma0, standard deviation, and normalized departure for
+each observation in a batch of scatterometer data, and accumulates the
+components of Jscat, the scatterometer loss function.}
+
+A model function or forward model is used to simulate \s0.  The model
+function calculates \s0 as a function of wind speed and direction and
+the geometry and polarization of the observation.  The geometry is
+specified in terms of the pointing direction of the antenna and the
+incidence angle.  For \ers1,2 the CMOD4 model function is used
+\reference{Offiler 1994, Stoffelen and Anderson 1997}{Off94,StoA97a}.
+For \nscat\ the NSCAT1 model function is used.  Earlier versions of
+the $K_u$ band model function include SASS1, and SASS2 = NSCAT0.
+These model functions are all available in terms of a look-up table.
+
+For \ers1,2 the \s0 are resampled to the WVC, and the three \s0 values
+corresponding to fore, mid and aft beam are all valid at the same
+location.  For \nscat\ the individual \s0 are not resampled but are
+sorted into the WVC.  Each however has its own location.
+
+\xxx {Background functional}
+
+The background functional, \J{b} is
+ \eql{Jb}{
+  J_b = \frac{\gl{b}}{S_b} \int_A (\Vector{U}^a -\Vector{U}^b)^2 dA . }
+
+The scaling parameter $S_b$ makes \J{b} nondimensional and of
+convenient magnitude.  Since \gl{b} is an adjustable parameter, $S_b$
+is simply a convenience.  We define $S_b$ in terms of typical velocity
+and length scales,
+ \eql{Sb}{ S_b = V^2 L^2 . }
+ Here \begin{itemize}
+  \vardef{L}{length scale}{\mks{\mks{10^6}{m} = 10^3}{km}}
+  \vardef{V}{velocity scale}{\mks{10}{m/s}}
+ \end{itemize} 
+ And from these we define a time scale for later use:
+ \begin{itemize}
+  \vardef{T}{time scale}{\mks{L/V = 10^5}{s}}
+ \end{itemize} 
+
+For uniformity with what follows we write \eqr{Jb} separately for $u$ and
+$v$ wind components and introduce the operator \Operator{R}.  For
+\J{b} alone this is entirely redundant.  We divide \eqr{Jb} by components,
+ \eql{Jbuv}{
+  J_b = \glmsm{\bgd{u}} \Jm{\bgd{u}} + \glmsm{\bgd{v}} \Jm{\bgd{v}} , }
+ where \glm{\bgd{u}} and \glm{\bgd{v}} are identical with \gl{b}; 
+\subsc{S}{\bgd{u}} and \subsc{S}{\bgd{v}} are identical with $S_b$;
+ \eql{Jm}{ \J{m} = \int_A [\Operator{R}_m(\Vector{U}^a) -
+   \Operator{R}_m(\Vector{U}^b)]^2 dA , }
+ for $ m \in \{ \bgd{u}, \bgd{v} \}$; and
+ \eql{Rbgd}{ \subsc{\Operator{R}}{\bgd{u}}(\Vector{U}) = u , \qquad
+          \subsc{\Operator{R}}{\bgd{v}}(\Vector{U}) = v . }
+
+In summary the background constraints and scales are specified in
+terms of $S_m$ and $\Operator{R}_m$ as follows:
+ \begin{center}
+ \begin{tabular}[hbt]{|c|c|c|} \hline \hline
+  $m$ & $S_m$ & $\Operator{R}_m$ \\ \hline
+  \bgd{u} & $ V^2 L^2 $ & $u$ \\
+  \bgd{v} & $ V^2 L^2 $ & $v$ \\
+  \hline
+ \end{tabular}
+ \end{center}
+
+Note: As an extension, the integrand of \eqr{Jb} might be normalized
+by an \apriori\ position dependent standard deviation of forecast wind
+errors.
+
+\xxx {Evaluation of integrals}
+
+All integrals are put in the form of \eqr{Jm}, which we write as
+ \eql{Jmdel}{ J_m = \int_A (\Delta \Operator{R})^2 dA , }
+ where
+ \eql{DR}{ \Delta \Operator{R} = \Operator{R}_m(\Vector{U}^a) -
+   \Operator{R}_m(\Vector{U}^b) . }
+ If \Operator{R} is linear then we may write
+ \eql{DRL}{ \Delta \Operator{R} = \Operator{R}_m(\Vector{U}^a -
+   \Vector{U}^b) . }
+ Note that $\Operator{R}_m(\Vector{U}^b)$ is fixed and may be
+precalculated and stored.  This would not be a savings for linear
+operators, but is potentially a small savings for nonlinear operators.
+
+For all \J{m} we discretize the integral as
+ \eql{Jmdisc}{ J_m = \sum_{i,j} (\Delta \tilde{R}_{ij})^2 A_{ij} , }
+ where \begin{itemize}
+  \vardef{\Delta \tilde{R}_{ij}}{an estimate of $\Delta \Operator{R}$
+at the middle of grid box $ij$}{\sim S_b}
+  \vardef{ A_{ij}}{area of grid box $ij$}{m^2}
+ \end{itemize} 
+ This simple formula is adequate.  Recall that \J{} is {\em ad~hoc}
+and the \gl{} are adjustable.  Thus we may easily subsume the
+integration formula into the assumption that minimizing \J{} provides
+the optimal analysis.  In other words, we identify the best analysis
+as the minimizer of the discrete formulation of \J{}.  These 
+considerations also apply to our formulations of the $ \tilde{R} $,
+and suggest choosing the simplest possible averaging and difference forms.
+However, it is vital that once the finite difference version of \J{}
+is chosen, the gradient of \J{} be calculated as exactly and precisely
+as possible.
+
+The area of the grid box is,
+ \eql{area}{ A_{ij} = a^2 \delta x \delta(\sin y) .}
+ Here \begin{itemize}
+  \vardef{a}{radius of the earth}{\mks{6371 \times 10^6}{m}}
+  \vardef{\delta x}{longitude increment}{radians}
+  \vardef{\delta(\sin y)}{difference in sine of latitude across the grid box}{+1.0}
+ \end{itemize} 
+
+\xxx {Constraint functional}
+
+The total constraint functional, \J{c}, defined in \eqr{J} is
+subdivided into the weighted sum of individual constraints,
+ \eql{Jc}{ \begin{array}{ccl}
+  J_c & = & \glmsm{div} \Jm{div} + \glmsm{vor} \Jm{vor} + 
+  \glmsm{\lap{u}} \Jm{\lap{u}} + \cdots , \\ & & \\
+      & = & \displaystyle \sum_{m \in Q} \frac{\gl{m}}{S_m} \J{m} .
+ \end{array} }
+ Here \begin{itemize}
+  \vardef{\glm{div}}{lambda weight for divergence constraint}{+1.0}
+  \vardef{\Sm{div}}{scale for divergence constraint}{(m/s)^2}
+  \vardef{\Jm{div}}{divergence constraint}{(m/s)^2}
+  \vardef{\glm{vor}}{lambda weight for vorticity constraint}{+1.0}
+  \vardef{\Sm{vor}}{scale for vorticity constraint}{(m/s)^2}
+  \vardef{\Jm{vor}}{vorticity constraint}{(m/s)^2}
+  \vardef{\glm{\lap{u}}}{lambda weight for $u$ Laplacian constraint}{+1.0}
+  \vardef{\Sm{\lap{u}}}{scale for $u$ Laplacian constraint}{1/s^2}
+  \vardef{\Jm{\lap{u}}}{$u$ Laplacian constraint}{1/s^2}
+  \vardef{Q}{set of smoothness and dynamical constraints}{\Omega}
+  \vardef{m}{one of the smoothness and dynamical constraints}{\omega}
+  \vardef{\gl{m}}{lambda weight for the $m$th constraint}{+1.0}
+  \vardef{S_m}{scale for the $m$th constraint}{\mbox{various}}
+  \vardef{\J{m}}{cost function for the $m$th constraint}{\sim S_m}
+ \end{itemize} 
+
+The \apriori\ constraints are all formulated as \eqr{Jm}, that is, as
+the integral of the squared difference of some operator applied to the
+analysis field and to the background field.  Both of the analysis and
+background fields are gridded, so it is possible to evaluate all of
+the \apriori\ constraints by scanning from south to north in latitude.
+In addition since the total cost function may be considered to be the
+weighted sum of many partial cost functions in which the weights are
+fixed and known \apriori, it is possible to accumulate the
+contributions to the sensitivities of the total of the \apriori\
+constraints in the same sweep over latitude.
+
+Below, all the operators $ \Operator{R}_m $, for \J{c}, are put in the
+form,
+ \eql{R}{ \Operator{R} = \Dot{\nabla}{Q} . }
+
+\xxxx {Smoothness constraints}
+
+The smoothness constraints are based on minimizing the vorticity,
+divergence and Laplacian of the analysis increments.  The smoothness
+constraints and scales are specified in terms of $S_m$,
+$\Operator{R}_m$ and $Q_m$ as follows:
+
+ \begin{center}
+ \begin{tabular}[hbt]{|c|c|c|c|} \hline \hline
+  $m$ & $S_m$ & $\Operator{R}_m$ & $Q_m$ \\ \hline
+  {\sc div} & $ T^{-2} L^2 $ & \Dot{\nabla}{V} & \Vector{V} \\
+  {\sc vor} & $ T^{-2} L^2 $ & \Dot{- \nabla}{\Cross{k}{V}} & \Cross{k}{V} \\
+  \lap{u} & $ T^{-2} $ & $ \nabla^2 u $ & \Vector{\nabla} u \\
+  \lap{v} & $ T^{-2} $ & $ \nabla^2 v $ & \Vector{\nabla} v \\
+  \hline
+ \end{tabular}
+ \end{center}
+
+The definitions of the $Q_m$ follow immediately from the definitions
+of the $\Operator{R}_m$ and the vector identities.
+
+Just as the background constraint was divided into a part associated
+with $u$ and a part associated with $v$, the Laplacian of the wind is
+divided into a part labeled \lap{u} and a part labeled \lap{v}.  The
+weights and scales should be identical for these two constraints.
+
+\xxxx {Dynamic constraints}
+
+The dynamic constraints are based on minimizing the analysis
+increments of the time rate of change of vorticity and divergence.
+The dynamical constraints and scales are specified in terms of $S_m$,
+$\Operator{R}_m$ and $Q_m$ as follows:
+
+ \begin{center}
+ \begin{tabular}[hbt]{|c|c|c|c|} \hline \hline
+  $m$ & $S_m$ & $\Operator{R}_m$ & $Q_m$ \\ \hline
+  {\sc dvdt} & $ T^{-4} L^2 $ & $\partial \zeta / \partial t$ &
+   $\eta \Vector{V} + \Cross{k}{F}$ \\
+  {\sc dddt} & $ T^{-4} L^2 $ & $ \partial D / \partial t$ &
+   $ \displaystyle \eta (\Cross{k}{V}) - F + \Vector{\nabla}
+   \left( \frac{u^2 + v^2}{2} \right)$ \\
+  \hline
+ \end{tabular}
+ \end{center}
+
+To compute the dynamic constraints and to determine the $Q_m$, we
+start with the equations from Bourke \etal\ \reference{1977}{BouMP+77}
+for the time rate of change of vorticity and divergence.  We then
+eliminate the following terms:
+ \begin{itemize}
+ \item {\em Horizontal friction terms.} Horizontal friction is negligible at
+synoptic scales.  It is principally a numerical device to parameterize
+the scale interactions in forecast models.
+ \item {\em Vertical advection terms.}  Formally the vertical velocity in
+sigma coordinates is zero at the surface.
+ \item {\em Mass field terms.}  The temperature and surface pressure
+are not changed by the \vam.  Since they are held fixed, they would
+cancel in the subtraction of \eqr{Jm}.
+ \end{itemize}
+ With these assumptions,
+ \eql{dzdt1}{\DpDp{\zeta}{t} = -\frac{1}{a \cos \phi} \left[
+   \DpDp{ (\zeta u) }{\lambda} + \DpDp{ (\cos \phi \: \zeta v) }{\phi} \right]
+   - f D - \beta v + \Dot{k}{\Cross{\nabla}{F}} , }
+ \eql{dDdt1}{\DpDp{D}{t} = \frac{1}{a \cos \phi} \left[
+   \DpDp{ (\zeta v) }{\lambda} - \DpDp{ (\cos \phi \: \zeta u) }{\phi} \right]
+   + f \zeta - \beta u + \Dot{\nabla}{F}
+   - \nabla^2 \left( \frac{u^2 + v^2}{2} \right) . }
+ Here \begin{itemize}
+  \vardef{\zeta}{relative vorticity}{s^{-1}}
+  \vardef{D}{divergence}{s^{-1}}
+  \vardef{\Vector{k}}{unit vertical vector}{(0,0,1)}
+  \vardef{\lambda}{longitude}{radians}
+  \vardef{\phi}{latitude}{radians}
+  \vardef{f}{Coriolis parameter}{s^{-1}}
+   \eql{f}{ f = 2 \Omega \sin \phi . }
+  \vardef{\Omega}{planetary rotation rate}{s^{-1}}
+  \vardef{\beta}{Meridional derivative of $f$}{m^{-1}s^{-1}}
+ \end{itemize} 
+ In these equations the first terms may be written in vector notation
+as $ - \Dot{\nabla}{(\Scalar{\zeta} {V})} $ for \eqr{dzdt1} and
+as $ - \Dot{\nabla}{(\Scalar{\zeta} \Cross{k}{V})} $ for
+\eqr{dDdt1}.  Noting that $ \nabla f = (0, \beta) $, a small algebraic
+manipulation puts these equations in the form,
+ \eql{dzdt2}{\DpDp{\zeta}{t} = - \Dot{\nabla}{\left[\Scalar{\eta} {V} +
+\Cross{k}{F}\right]} , }
+ \eql{dDdt2}{\DpDp{D}{t} = - \Dot{\nabla}{\left[\Scalar{\eta}
+  (\Cross{k}{V}) - F +
+  \nabla \left( \frac{\Scalar{u^2 + v^2}}{2} \right)\right]} . }
+ Here \begin{itemize}
+  \vardef{\eta}{total vorticity}{s^{-1}}
+   \eql{eta}{ \eta = \zeta + f . }
+ \end{itemize} 
+ Since we square the integrands of \eqr{Jm} the negative signs which
+appear in \eqr{dzdt2} and \eqr{dDdt2} may be dropped.
+
+\xxx {Evaluation of the R operators}
+
+The analysis and background fields, $ \Vector{U}^a, \Vector{U}^b $,
+are defined at the grid points.  The integrands are all the sum of
+squares of the difference given by \eqr{DR} or in the linear case of
+the simplification given by \eqr{DRL}.
+
+For \J{b}, the $ \tilde{R}_m $ are simply estimates of $u$ or $v$
+in the center of the grid box.  For
+any $q$ we estimate the value of $q$ at the center of a grid box by
+the average of the four corner grid point values,
+ \eql{qbar}{ \overline{q}_{i,j} =
+  (q_{i,j} + q_{i-1,j} + q_{i,j-1} + q_{i-1,j-1})/4 .}
+
+For \J{c}, all the operators $ \Operator{R}_m $ are of the form \eqr{R}.
+ If the components of \Vector{Q} are $(p,q)$, then in spherical
+geometry,
+ \eql{Div}{ \Dot{\nabla}{Q} =
+  \frac{1}{a \cos \phi} \left( \DpDp{p}{\lambda} \right) +
+  \frac{1}{a} \left( \DpDp{q}{\phi} \right) - \frac{\tan \phi}{a} q . }
+ In finite difference form \eqr{Div} becomes
+ \eql{DivFD}{ \Dot{\nabla}{Q} \approx p_x + q_y - \frac{\tan \phi}{a} q , }
+ where for any $p$ and $q$,
+ \eql{xFD}{ p_{x,ij} = \frac{p_{i+1,j} - p_{i-1,j}}{2 a \cos y_j \delta x},
+  \qquad  q_{y,ij} = \frac{q_{i,j+1} - q_{i,j-1}}{2 a \delta y} . }
+ These finite difference forms may be applied directly if we are
+applying \eqr{Div} at a grid point.  However, the \Operator{R} must be
+evaluated at the center of the grid box.  Instead of applying
+\eqr{xFD} directly in \eqr{DivFD} at the grid points and then
+averaging using \eqr{qbar}, we apply \eqr{DivFD} at the center of the
+grid box.  Using an overbar to indicate a value at the center of the
+grid box the finite difference form \eqr{Div} now becomes
+ \eql{DivFDbar}{ \overline{\Dot{\nabla}{Q}} \approx \overline{p_x} 
+  + \overline{q_y} - \frac{\tan \overline{\phi}}{a} \overline{q} , }
+ where for any $p$, we evaluate $\overline{p_x}$ by first averaging in
+$y$ and then differencing in $x$, and for any $q$ we evaluate
+$\overline{q_y}$ by first averaging in $x$ and then differencing in
+$y$,
+ \eql{xFDbar}{ (\overline{p_x})_{ij} = \frac{p_{i,j} + p_{i,j-1} -
+   p_{i-1,j} - p_{i-1,j-1}}{2 a \cos \overline{y_j} \delta x},
+  \qquad   (\overline{q_y})_{ij} = \frac{q_{i,j} + q_{i-1,j} -
+   q_{i,j-1} - q_{i-1,j-1}}{2 a \delta y} . }
+ The reader should recall that the $i$th grid box is bounded by grid
+points $i-1$ and $i$.
+ Combining \eqr{xFDbar} with \eqr{qbar} for $q$ gives the final finite
+difference form for $\tilde{R}$,
+ \eql{tildeR}{\tilde{R}_{ij} = 
+  \overline{\alpha_j} (p_{i,j} + p_{i,j-1} - p_{i-1,j} - p_{i-1,j-1}) +
+  \overline{\beta_j} (q_{i,j} + q_{i-1,j}) - \overline{\gamma_j} (q_{i,j-1} + q_{i-1,j-1}) , }
+ where the coefficients are \begin{itemize}
+  \vardef{\overline{\alpha_j}}{first coefficient to calculate grid cell divergence}{m^{-1}}
+   \eql{alphaj}{\overline{\alpha_j} = (2 a \cos \overline{y_j} \delta x)^{-1} . }
+  \vardef{\overline{\beta_j}}{second coefficient to calculate grid cell divergence}{m^{-1}}
+   \eql{betaj}{\overline{\beta_j} = (2 a \delta y)^{-1} - \frac{\tan \overline{y_j}}{4 a} . }
+  \vardef{\overline{\gamma_j}}{third coefficient to calculate grid cell divergence}{m^{-1}}
+   \eql{gammaj}{\overline{\gamma_j} = (2 a \delta y)^{-1} + \frac{\tan \overline{y_j}}{4 a} . }
+ \end{itemize} 
+
+Some of the \Vector{Q} include gradient operator.  For any scalar $q$
+we have,
+ \eql{grad}{ \Vector{\nabla} q = \left(
+  \frac{1}{a \cos \phi} \left( \DpDp{q}{\lambda} \right) ,
+  \frac{1}{a} \left( \DpDp{q}{\phi} \right) \right) . }
+ The finite difference form is therefore simply $ (q_x, q_y) $.
+
+\xxx {Lambda weights}
+
+One issue that arises is how to tune the \gl{} weights to get similar
+results when changing the analysis resolution, data density, or data
+representation.   See Appendix \ref{lambda-tuning}.
+
+\xxx {Extension for inclusion of a pole point}
+
+An unambiguous definition of direction at the pole must be defined.
+In the past we have arbitrarily harmonized direction at the pole with
+direction along the Greenwich Meridian.  The grid description must be
+extended to indicate which latitude indices indicate the north and/or
+south pole(s).  The mapping operator \Operator{M} must take the single
+wind at the pole stored in \Vector{X} and expand it to all longitudes
+using a a wave number one dependence.  The interpolation operator may
+need to be specialized for the pole.
+
+The contribution from the polar cap(s) to the integrals of \J{b} and
+\J{c} must be treated specially.  Consistent with \eqr{Jm} the
+contribution from the polar cap is equal to the area of the cap times
+the square of $ \Delta R $ at the pole.  For \J{b} no estimation is
+necessary since the wind components are specified at the poles.  For
+\J{c} it is convenient to estimate \Dot{\nabla}{Q} by its average
+value over the polar cap and calculate this average value by means of
+the Divergence Theorem.  According to this theorem the integral of
+\Dot{\nabla}{Q} over the polar cap is equal to the integral of $q$
+around the boundary of the polar cap.
+
+\xx {Minimization}
+
+The minimization procedure used is \computer{VA15AD}.
+ \TBD{reference?}
+
+The stopping criteria is either
+ \eql{stopping}{ |\Vector{G}| \leq \epsilon |\Vector{X}| , }
+ or, until $N_f$ function evaluations, whichever occurs first.
+ Here \begin{itemize}
+  \vardef{ \Vector{G}}{gradient of \J{} \wrt\ \Vector{X}}{(m/s)^{-1}}
+  \vardef{\epsilon}{gradient test stopping parameter}{10^{-4}}
+  \vardef{N_f}{function call stopping parameter}{3000}
+ \end{itemize} 
+
+Typically several hundred iterations are required.  This is very
+strict convergence criterion.  In a typical experiment the rms
+difference in $u$ or $v$ between the solution after 250 and after 225
+function calls is \mks{\sim 0.02}{m/s}, with maximum differences of
+\mks{\sim 0.5}{m/s}.
+
+Note: It is on our list to experiment with \computer{rhopt}, a new
+minimization code.
+
+\xx {Data sources}
+
+\TBD{This section needs more work.}
+
+\begin{itemize}
+\item Grid: background and initial analysis.
+\item Conventional (ships, buoys, unique scatterometer, assigned SSMI...)
+\item Ambiguous winds (SASS, NSCAT)
+\item Wind speed and possibly directions (SSMI)
+\item Sigma0 raw: NSCAT
+\item Sigma0 resampled: ERS1
+\end{itemize}
+
+A summary of the data types and their characteristics follow (``X''
+indicates a given data platform contains the data characteristic).
+
+ \begin{center}
+ \begin{tabular}[hbt]{|c|c|c|c|c|c|c|} \hline \hline
+  \small$Characteristic$ & \small$Conventional$ & \small$SSM/I$ & \small\ers1,2 & \small$Amb. winds$ & \small$NSCAT \s0$ & \small$QSCAT 25km$ \\ \hline
+  location & X    & X       & X       & X       & X           & X \\
+  wind     & X    & U, LOS  & X(1-4)  & X(1-4)  &             & X \\
+  QC       & X    &         & X       & X       & X           & X \\
+  \s0      &      &         & X(3)    &         & X           & X \\
+  $T_b$    &      & X       &         &         &             &   \\
+  weight   & 1.0  & $\subsc{s^{-2}}{v},\subsc{s^{-2}}{los}$     & $K^{-2}_p$   & $\subsc{s^{-2}}{ambig}$       & $Var(\s0)^{-1}$  & TBD \\
+  geometry &      & X       & X(LOS)  &         & X           & X \\
+  time     & X    & X       & X       & X       & X           & X \\
+  \hline
+ \end{tabular}
+ \end{center}
+
+\xx {QC}
+
+\TBD{This section needs more work.}
+
+Quality control procedures tend to be similar across data
+platforms.  The baseline level of QC includes a gross check and
+a background check.  All comparisions between the gridded winds
+and data use the current analysis, which is equal to the background
+before minimization.  Additional checks against the analysis
+may be performed between minimizations to allow more of the data to
+be used or to trim outliers from a final analysis.  In general the
+QC procedures do not change values.  The data structure for each 
+platform should contain a QC flag for each datum.  When data are
+checked against the current analysis, the QC flags for any given
+data platform may be reset, if requested.
+
+Special features of QC for individual data platforms are accounted
+for and noted below.
+
+Note: Presently, QC flags are set by making weights or standard
+deviations negative.
+
+\xxx {Gross checks}
+
+Gross checking is performed when the data is read from source
+files and prevents nonsensical values from being stored in the \vam\
+data structures.  Special values for a given data platform are
+also treated as a gross data check and handled appropriately.
+
+\xxxx {Flag values}
+
+For \nscat\ data, if $\subsc{N}{ambig} = 0$, and the wind speed is
+\mks{0}{m/s}, use it as a good report, with direction from
+\degrees{360}.
+
+\xxxx {Negative backscatter (\s0) \obs}
+
+Negative \s0 observations are edited and set equal to a small value
+indicative of very light winds.  First \s0 \obs\ are initially QC'd to
+insure they are in the range \computer{(s0min,s0max)} in linear space.
+Any values less than \computer{s0min\_edit} are set equal to
+\computer{s0min\_edit}.  All \s0 \obs\ used in the analysis therefore
+are in the range \computer{(s0min\_edit,s0max)}.  Default values for
+\computer{(s0min, s0min\_edit, s0max)} are set in
+\computer{rbo\_default.F} to \computer{( -1.e+3, 1.e-6, 1.e+3 )}, but
+may be changed via namelist.
+
+Note: If we edit \s0, do we edit the \K{p} values.  For negative \s0,
+consider use of $ K_{pA}=K_{pB}=0 $ and $ K_{pC} = \s0^2$.
+
+\xxx {Thinning}
+
+For high spatial resolution data the \vam\ may accept only the every
+$n$th point for $ n = \subsc{n}{thin}$.
+ \TBD{This is implemented for \ers1,2, but not for \nscat\ at this time.}
+
+ \TBD{For \s0 an alternative is to average different flavors (i.e. all
+mid beam Vpol) over the wind vector cell.}
+
+\xxx {Field comparison}
+
+The normalized departures similar or identical to those defined in the
+specification of \J{o} are compared to a limiting value.  Departures
+in terms of wind components, wind speed, and direction are
+considered.  Instead of direction, the cosine of direction evaluated
+from the dot product formula may be used.
+
+QC is done \wrt\ the current analysis.  At the start of the process
+when the current analysis is the background, the QC is a background
+check.  Later it is a preliminary analysis check.  Data failing the
+background check may be considered by a later (and stricter)
+preliminary analysis check.  Some of these data are allowed back in to
+the analysis.
+
+\xxxx {Conventional wind \obs}
+
+Three tests are used to determine if an observation is an outlier.
+If any of the following tests are true, the point is considered an
+outlier.
+
+Vector velocity (u,v):
+
+ \eql{qcuv}{ \frac{ [ (u^o - u^a)^2 + (v^o - v^a)^2 ]^{1/2} }
+   { (V^o + V^a)/2 } > \gamma_{1} }
+
+Velocity magnitude ($\Delta |V|$):
+
+ \eql{qcV}{ \frac{ | V^o - V^a | }
+   { (V^o + V^a)/2 } > \gamma_{2} }
+
+Velocity direction ($\Delta D$):
+
+ \eql{qcD}{ \frac{ \Dot {\Vector{V}^o} {\Vector{V}^a} }
+   { V^o V^a } > \gamma_{3} }
+
+ Here \begin{itemize}
+  \vardef{ \gamma_{1}}{limiting value for vector velocity test}{+1.0}
+  \vardef{ \gamma_{2}}{limiting value for velocity magnitude test}{+1.0}
+  \vardef{ \Vector{V}^o}{$u-$ and $v-$wind components of the \obs}{\mks{}{m/s}}
+  \vardef{ \Vector{V}^a}{$u-$ and $v-$wind components at the \obs location}{\mks{}{m/s}}
+  \vardef{ \gamma_{3}}{limiting value for velocity direction test}{+1.0}
+ \end{itemize} 
+
+Typically, $\gamma_{1} = \gamma_{2} = 1.0$.  For the velocity direction
+test, $\gamma_{3}$ is the cosine of the angle between observation
+and analysis winds and nominally, $\gamma_{3} = 0.5$ (\degrees{60}).
+The limiting values may be altered via namelist.
+
+Note: These tests do not depend on the standard deviation of the 
+\obs, $s_u, s_v$, or $s_V$.
+
+Note: Currently, separate subroutines are used to evaluate
+the above tests for each data platform.  Data are passed in by common.
+One new subroutine could replace subroutines \computer{residc} and
+\computer{resid} with data passed in as arguments.
+
+\xxxx {Ambiguous wind \obs}
+
+Tests \eqr{qcuv} - \eqr{qcD} are performed on the ambiguity closest
+to the current analysis.  Very small or zero winds are handled as a
+special case.  When $V^a \leq V_c$, where $V_c$ is some small number
+($O(\mks{1}{m/s})$) we interpret this to be the same as calm.  When
+$V^o \leq V_c$, we also interpret this as calm.  When both $V^o$ and
+$V^a$ indicate calm winds, they are considered to agree and tests
+\eqr{qcuv} - \eqr{qcD} are set to \computer{false}.
+
+\xxxx {Wind speed \obs}
+
+SSM/I wind speed and LOS wind speed \obs contain no direction
+information and should use the velocity magnitude test only \eqr{qcV}.
+
+Note: Currently, SSM/I wind speed obs are not QC'd.
+
+\xxxx {Backscatter (\s0) \obs}
+
+\ers1,2 and \nscat\ backscatter QC are handled differently.
+For \ers1,2 the \s0 are resampled to the WVC, and the three \s0 values
+corresponding to fore, mid and aft beam are all valid at the same
+location.  For \nscat\ the individual \s0 are not resampled but are
+sorted into the WVC.  There are typically four \s0 in a \mks{25}{km}
+WVC (one from each measurement antenna), and sixteen in a
+\mks{50}{km} WVC. Each however has its own location.
+
+For \ers1,2 \s0 \obs, we use the average normalized departure
+from the background for the QC statistic.
+
+ \eql{qcers}{ N^{-1} \sum_{i=1}^{N}
+   \left( \frac{(\s0)^o_i - (\s0)^a_i}{s_{\s{}i}} \right)^2 > \gamma_{ERS}}
+
+ Here \begin{itemize}
+  \vardef{N}{number of \s0 measurements in one wind vector cell}{+1}
+  \vardef{i}{index of the of \s0 measurements}{+1}
+  \vardef{ \gamma_{ERS}}{limiting value for the average normalized departure}{+1.0}
+ \end{itemize} 
+
+Nominally, $\gamma_{ERS} = 10$.  If \eqr{qcers} is \computer{true},
+all \s0 at the data location are flagged and excluded from the
+minimization.
+
+For NSCAT, we use a simple departure test for each \s0 measurement
+in dB space.
+
+\eql{qcnscat}{(\s0)^o - (\s0)^a > \gamma_{NSCAT}}
+
+We have found that $\gamma_{NSCAT} = \mks{9}{dB}$ typically eliminates
+$\sim 5\%$ of the data.
+
+\xx {Data structures}
+
+\TBD{This section needs more work.}
+
+\xxx {Grids}
+
+\xxx {Observations}
+
+Possible approach:
+ \begin{itemize}
+
+\item The data structure should be self-describing.
+
+\item ID + flat file (table structure, like used for ssmi in new code).
+
+\item Allocatable matrix for table structure.
+
+\item Possibly one data structure per input file.  To separate statistics of
+f10 from f11, or buoys from ships.
+
+\end{itemize}
+
+\xxx {Conversions}
+
+Some of the satellite wind observations are referenced to
+\mks{19.5}{m} instead of \mks{10}{m}.  For SASS and SSM/I data
+produced by Wentz, and presumably for many other data producers, the
+wind speed at \mks{10}{m} is equal the wind speed at \mks{19.5}{m}
+times 0.943 \reference{Wentz 1989, Halpern 1993}{Wen89,Hal93}.  The
+wind direction is unchanged.
+
+Wind components and speed and direction are interchanged according to,
+ \eql{uv2VD}{ V = (u^2 + v^2)^{1/2}, \qquad 
+              D = \mbox{\computer{atan2}}(u,v). }
+ \eql{VD2uv}{ u = -V \sin D, \qquad v = -V \cos D . }
+ Here \begin{itemize}
+  \vardef{u}{eastward wind component}{m/s}
+  \vardef{v}{northward wind component}{m/s}
+  \vardef{V}{wind speed}{m/s}
+  \vardef{D}{wind direction}{radians}
+   The meteorological wind direction is used.
+ \end{itemize} 
+
+Temporal information is not presently used.  The difference between
+the data time and the analysis time is the relevant quantity however.
+
+\xx {Functional requirements}
+
+\TBD{This section needs more work.}
+
+\begin{enumerate}
+
+\item For IO there will be a namelist with names of files to read.
+
+\item Read and regrid automatically sort the data when done.
+
+\item Read initializes scatterometer global variables if \s0 data are
+read. (JSCALL)
+
+\item QC includes the option to reset all or some QC flags.
+
+\item Minimization vs evaluation again.  What about passive data,
+i.e. \gl{l} = 0 for something, but we want to track how it is fit by
+the analysis.
+
+\end{enumerate}
+
+\xx {Standards}
+
+\TBD{This section needs more work.}
+
+\begin{enumerate}
+
+\item Vector notation where possible.
+
+\item Documentation at the level of TAP.
+
+Some revisions for \computer{f90} to take advantage of the fact the
+\computer{f90} allows more complete in code documentation of
+\computer{INTENT}, etc.  (That is, if the code is the documentation,
+so much the better.)
+
+\item Generic names
+
+One version of \computer{regrid, sort} should work on all of them.
+
+\computer{Resid} would have a special method for a special type.
+
+\item Standard deviations
+
+Each \obs\ should have an estimated standard deviation, which should be
+used in the obs function.  But for some types it is a constant.
+
+But some must be calculated from the trajectory values.
+
+Stoffelen and Anderson \reference{1997}{StoA97a} have a new formulation
+for \ers1,2.
+
+\item IO
+
+Files should be images of common blocks.  At end of execution, or at
+selected times, output images of common blocks including trajectory
+values and QC.  Or divide this up into two files with \computer{INTENT
+(IN)} and \computer{(OUT)}.
+
+\item Program size
+
+Allocatable arrays should be used to keep the size small for test
+cases, etc.
+
+\item Program speed
+
+Some timing tests are in order.
+
+Especially consider inlining for \computer{Jscat}.
+
+Replace CMOD4 with a table?
+
+\end{enumerate}
+
+%%%: \bibliography{agu-abbrev,current,nwp}
+%%%: \bibliographystyle{abbrv}
+
+\begin{thebibliography}{10}
+
+\bibitem{AtlHB+96}
+R.~Atlas, R.~N. Hoffman, S.~C. Bloom, J.~C. Jusem, and J.~Ardizzone.
+\newblock A multiyear global surface wind velocity data set using {SSM/I} wind
+  observations.
+\newblock {\em Bull.\ Am.\ Meteorol.\ Soc.}, 77(5):869--882, May 1996.
+
+\bibitem{BouMP+77}
+W.~Bourke, B.~McAvaney, K.~Puri, and R.~Thurling.
+\newblock Global modeling of atmospheric flow by spectral methods.
+\newblock In J.~Chang, editor, {\em General Circulation Models of the
+  Atmosphere}, volume~17 of {\em Methods in Computational Physics}, pages
+  267--324. Academic, New York, 1977.
+
+\bibitem{Deed98}
+D.~P. Dee and A.~M. da~Silva.
+\newblock Data assimilation in the presence of forecast bias.
+\newblock {\em Q. J. R. Meteorol.\ Soc.}, 124(545):269--295, Jan. (Part~A)
+  1998.
+
+\bibitem{DeeGR+99}
+D.~P. Dee, G.~Gaspari, C.~Redder, and L.~Rukhovets.
+\newblock Maximum-likelihood estimation of forecast and observation error
+  covariance parameters. {Part II}: Applications.
+\newblock {\em Mon.\ Weather Rev.}, 127(8):1835--1849, Aug. 1999.
+
+\bibitem{GoeP92}
+J.~S. Goerss and P.~A. Phoebus.
+\newblock The {Navy}'s operational atmospheric analysis.
+\newblock {\em Weather Forecast.}, 7:232--249, June 1992.
+
+\bibitem{Hal93}
+D.~Halpern.
+\newblock Validation of {Special Sensor Microwave Imager} monthly-mean wind
+  speed from {July} 1987 to {December} 1989.
+\newblock {\em IEEE Trans.\ Geosci.\ Remote Sens.}, 31(3):692--699, 1993.
+
+\bibitem{Hof82}
+R.~Hoffman.
+\newblock {SASS} wind ambiguity removal by direct minimization.
+\newblock {\em Mon.\ Weather Rev.}, 110(5):434--445, 1982.
+
+\bibitem{Hof84}
+R.~N. Hoffman.
+\newblock {SASS} wind ambiguity removal by direct minimization. {II}: Use of
+  smoothness and dynamical constraints.
+\newblock {\em Mon.\ Weather Rev.}, 112(9):1829--1852, 1984.
+
+\bibitem{HofG96}
+R.~N. Hoffman and C.~Grassotti.
+\newblock A technique for assimilating {SSM/I} observations of marine
+  atmospheric storms.
+\newblock {\em J. Applied Meteorol.}, 35(8):1177--1188, Aug. 1996.
+
+\bibitem{NehH96}
+T.~Nehrkorn and R.~N. Hoffman.
+\newblock Development of a small-scale, relocatable optimum interpolation data
+  analysis system.
+\newblock In {\em 11th Conference on Numerical Weather Prediction}, pages
+  91--93, Norfolk, Virginia, 19-23~Aug. 1996. American Meteorological Society,
+  Boston, MA.
+
+\bibitem{Off94}
+D.~Offiler.
+\newblock The calibration of {{\em ERS-1}} satellite scatterometer winds.
+\newblock {\em J. Atmospheric Oceanic Technology}, 11(4):1002--1017, Aug. 1994.
+
+\bibitem{RitTS+95}
+H.~Ritchie, C.~Temperton, A.~Simmons, M.~Hortal, T.~Davies, D.~Dent, and
+  M.~Hamrud.
+\newblock Implementation of the semi-{Lagrangian} method in a high-resolution
+  version of the {ECMWF} forecast model.
+\newblock {\em Mon.\ Weather Rev.}, 123(2):489--514, Feb. 1995.
+
+\bibitem{StoA97b}
+A.~Stoffelen and D.~Anderson.
+\newblock Ambiguity removal and assimilation of scatterometer data.
+\newblock {\em Q. J. R. Meteorol.\ Soc.}, 123(538):491--518, Jan. (Part~B)
+  1997.
+
+\bibitem{StoA97a}
+A.~Stoffelen and D.~Anderson.
+\newblock Scatterometer data interpretation: Measurement space and inversion.
+\newblock {\em J. Atmospheric Oceanic Technology}, 14(6):1298--1313, Dec. 1997.
+
+\bibitem{TheHC93}
+J.-N. Th{\'e}paut, R.~N. Hoffman, and P.~Courtier.
+\newblock Interactions of dynamics and observations in a four-dimensional
+  variational assimilation.
+\newblock {\em Mon.\ Weather Rev.}, 121(12):3393--3414, Dec. 1993.
+
+\bibitem{TheVC+93}
+J.-N. Th{\'e}paut, D.~Vasiljevic, P.~Courtier, and J.~Pailleux.
+\newblock Variational assimilation of conventional meteorological observations
+  with a multilevel primitive-equation model.
+\newblock {\em Q. J. R. Meteorol.\ Soc.}, 119:153--186, 1993.
+
+\bibitem{WahW80}
+G.~Wahba and J.~Wendelberger.
+\newblock Some new mathematical methods for variational objective analysis
+  using splines and cross validation.
+\newblock {\em Mon.\ Weather Rev.}, 108(8):1122--1143, 1980.
+
+\bibitem{Wen89}
+F.~J. Wentz.
+\newblock User's manual. {SSM/I} geophysical tapes.
+\newblock Technical Report 060989, Remote Sensing Systems, Santa Rosa, CA,
+  9~June 1989.
+\newblock Revison 1 is TM 040792. TM 040692 also applies. Revision 2 is TM
+  040293.
+
+\end{thebibliography}
+
+%%%: ===========================================================
+
+\appendix
+
+\xx { Tuning the lambda weights \label{lambda-tuning} }
+
+A typical example of the difficulties of tuning the \gl{} weights is
+the question of how to choose the weights to compare the use of
+ambiguities versus backscatter.  Differences between an analysis from
+ambiguous winds and one from \s0 data may arise for several reasons:
+ \begin{enumerate} 
+ \item Different quality controls are applied to each type of data; or
+ \item Ambiguities may be missing in JPL's wind product but are
+inherently present in the \s0 data; or
+ \item The \gl{} for ambiguous winds and \s0 data may be inequitable.
+ \end{enumerate} 
+ Quality control issues and missing ambiguities are difficult to
+avoid, but we believe we can determine equitable lambda weights for
+ambiguous winds and \s0 data.
+
+If \nscat\ ambiguous winds and \s0 data represent essentially the same
+geophysical information (ocean surface winds), we would expect the
+\vam\ to produce similar wind analyses using either data source.  If
+this is correct, \gl{} for ambiguous winds and \s0 data must exist which
+produce similar analyses.  To determine equitable lambda weights for
+ambiguous winds and \s0 data, we can examine any measure of the misfit
+between data and analysis versus a range of lambda weights.
+We say the lambda weights are equitable when the ambiguous
+winds/analysis misfit and the \s0 data/analysis misfit are the same.
+
+Two measures we have used to date are:
+ \begin{enumerate}
+ \item The rms wind speed difference between the \vam\ analysis
+interpolated to \nscat\ WVCs and the first ranked (i.e., highest MLE)
+JPL ambiguity; and
+ \item The objective function values computed in the \vam.  That is,
+to see how the misfit of other data (perhaps not used by the \vam)
+changes as ambiguous winds or \s0 data are assimilated.  For this
+purpose, objective functions are evaluated in the \vam\ after the
+minimization is finished for conventional data and ambiguous winds
+velocity magnitude, as well as ambiguous winds and \s0 data.
+ \end{enumerate}
+
+The value of these objective functions spans four orders of magnitude,
+so for plotting purposes, the function values are normalized by the
+functional value \wrt\ the background field.  For example, for
+conventional data, the sum of squares from the minimizing analysis is
+divided by the sum of squares from the background analysis.
+Normalized values less than one represent and improvement in the fit
+between analysis and data.
+
+For each of two N. Atlantic cases, one on 22 Sep 96 with low wind speeds
+and one on 28 Oct 96 with a well developed cyclone, five analyses using
+ambiguous winds and five analyses using \s0 data were created using a
+range of \gl{}.  In these experiments the nominal setup includes a
+\degrees{1 \times 1} grid, bicubic interpolation and the background
+vorticity constraint.  The \gl{} for the background field, smoothness
+and dynamic constraints are held fixed for all analyses at nominal
+values (1,1,4,1,16) and the minimization was allowed to run until the
+gradient test was satified for $ \epsilon = 10^{-4} $ (generally,
+anywhere from 100-500 iterations).
+When assimilating ambiguous winds, $ \glm{nscat} = \glm{ambig} = 1,
+4, 16, 64, 256$.
+For the \s0 data, $ \glm{nscat} = \glm{sigma} = 1/16,
+1/4, 1, 4, 16$.
+
+The rms wind speed difference results for the two cases examined so
+far show that the minimizing analyses can fit the data to within
+\mks{\sim 0.7}{m/s} rms, but no better given the current smoothness
+and dynamic constraints.  For a fit to \mks{\sim 1}{m/s} or better,
+these results indicate that $ \glm{ambig} = 16 $ and $ \glm{sigma} = 1
+$ would be sufficient.  A closer fit to the data could be accomplished
+by increasing the lambda weights while maintaining the 16:1 ratio.
+However, for a poorer fit to the data, it does not appear that the
+16:1 ratio would hold.
+
+The objective function plots show that the analyses fit all types of
+data better after assimilation of ambiguous winds or \s0 data.  The
+fit to conventional data is improved only marginally.  The objective
+function is reduced by less than 10\%.  The fit to ambiguous winds
+velocity magnitude is improved significantly.  The objective function
+is reduced by 30-50\%.  The fit to conventional data and ambiguous
+winds velocity magnitude is similar whether assimilating ambiguous
+winds or \s0 data.
+
+However the fit to ambiguous winds and \s0 data depend on which is
+being assimilated.  When ambiguous winds are assimilated, the
+ambiguous winds objective function is reduced by 40-90\%, and the \s0
+objective function is reduced by 50-90\%, but when \s0 data are
+assimilated, the ambiguous winds objective function is reduced by
+30-80\%, and \s0 objective function is reduced by 90-95\%.
+
+\end{document}

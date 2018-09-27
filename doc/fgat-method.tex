@@ -1,0 +1,367 @@
+%x Emacs: -*- mode:outline; outline-regexp:"[%\\\\]x+ " -*-
+%  RCS: $Id: fgat-method.tex,v 1.1 2005/02/15 17:24:47 rnh Exp $
+%  Copy of RCS: Id: progress-Aug04.tex,v 1.4 2004/09/29 15:18:05 rnh Exp
+%  p1219 progress report as of the end of August 2004.
+
+\documentclass[12pt,titlepage]{article}
+\usepackage{times}
+\input{format}
+\input{abbrev}
+
+\newcommand{\Chapter}[1]{document {\tt #1}}
+\newcommand{\Appendix}[1]{document {\tt #1}}
+\newcommand{\startAppendixes}{\appendix}
+\newcommand{\tabhead}[1]{{\bf #1}}
+
+\newcommand{\authors}{Ross N. Hoffman and S. Mark Leidner}
+\newcommand{\RCSid}{$Id: fgat-method.tex,v 1.1 2005/02/15 17:24:47 rnh Exp $}
+\newcommand{\RCSrevision}{$Revision: 1.1 $}
+\newcommand{\support}{\thanks{ 
+        Supported by NASA contract NAS5-32953.
+        AER, Inc. intends to retain % (has retained)
+        patent rights to certain aspects of the algorithms described herein
+        under FAR 52.227-11.}}
+\newcommand{\docinfo}{\thanks{ 
+        To be submitted to Goddard Space Flight Center (NASA/GSFC),
+        Greenbelt, MD 20771.}}
+\newcommand{\rightsinfo}[1]{\thanks{ 
+        Copyright \copyright\ #1.  
+        Work in Progress.  All Rights Reserved.}}
+\newcommand{\aerinfo}{\thanks{
+        Atmospheric and Environmental Research (AER), Inc.
+        131 Hartwell Avenue, Lexington, MA 02421-3126.
+        Phone: (781)-761-2288   FAX: (781)-761-2299
+        Net: \computer{http://www.aer.com/}.}}
+\newcommand{\revinfo}[1]{\thanks{
+        AER document version control: \computer{P1219, #1}.
+        Formatting version \computer{$Id: fgat-method.tex,v 1.1 2005/02/15 17:24:47 rnh Exp $}.}}
+\newcommand{\xtitle}[4]{
+        \title{Support for the Development of Cross-Calibrated, \\
+               Multi-Platform Ocean Surface Wind Products
+% For delivery modify \docinfo and eliminate \rightsinfo
+        #1$\!\!$\docinfo} 
+        \author{#2\rightsinfo{#2} \\
+        Atmospheric and Environmental Research, Inc.\aerinfo }
+        \date{#3\revinfo{#4} \\~\\ \today}
+        \maketitle
+        \markboth {AER, Inc.\ NASA FGAT for the VAM}
+        {#1 (#3)}
+        \begin{titlepage} \mbox{~} \end{titlepage}
+}
+
+\newcommand{\x}[1]{\xtitle{#1}{\authors}{\RCSrevision}{\RCSid}}
+
+\begin{document}
+
+\x {}
+
+\xx {Introduction}
+
+ This is a progress report on AER's support of
+the generation of cross-calibrated, multi-platform ocean surface wind
+products at NASA Goddard.
+ The project at NASA Goddard aims to generate high-quality,
+high-resolution, vector winds over the world's oceans between the
+years 1987 and 2007 using {\em in situ} and remotely sensed wind
+observations.
+This report summarizes work supported by AER project number 1219.
+
+ AER is helping specifically by enhancing the capability and
+optimizing the use of a two-dimensional data assimilation application
+for surface winds called the variational analysis method (VAM).
+ The VAM is at the center of the project's analysis procedures for
+combining observations of the wind over the world's oceans.
+
+  In this report, the results of software development and testing are
+reported in three areas:
+
+  \begin{itemize}
+    \item Data assimilation using the First Guess at the Appropriate
+    Time (FGAT) (\secr{FGAT})
+
+    \item Data assimilation of SSM/I winds (\secr{SSMI})
+
+    \item Date/time consistency checks (\secr{date-time})
+  \end{itemize}
+
+\xx {Data assimilation using the First Guess at the Appropriate Time (FGAT) \secl{FGAT}}
+
+The First Guess at the Appropriate Time (FGAT) procedure was designed
+and coded.
+The design is detailed in \secr{design}.
+Then cases were selected in collaboration with Joe Ardizzone for
+\qscat\ in the North Atlantic during October 2003.
+Some of these cases were used to test the FGAT code.
+We made a subjective and objective assessment of the impact of FGAT
+for selected cases \secr{assess}.
+The initial implementation was reworked to better integrate the FGAT
+preparation with the VAM.
+This should make the application of FGAT simpler and more efficient.
+The correctness of the new implementation (called
+\computer{FGAT\_ADD}) was established by regression testing (\ie, by
+repeating previous example cases).
+The new version of the VAM that includes the FGAT software and example
+test cases were delivered to Joe Ardizzone at NASA Goddard.
+
+\xxx {FGAT design\secl{design}}
+
+FGAT can be used to account for the first order effects of the
+asynopticity of the ocean surface wind observations.
+For a basic FGAT procedure one uses the time interpolated first guess
+to define the observation increments, but assumes the analysis
+increments are constant with respect to time.
+Another approach is to interpolate in time through the analysis (\ie,
+the analysis being determined by the VAM at the synoptic time) at the
+center time and through the fixed earlier and later estimates of the
+wind field.
+As described below both cases can be written as
+ \eql{fgat}{V_a(t) = \alpha V_a(t_1) + V_{\delta}.}
+Here $V = (u,v)$ is the surface wind, $t$ is time, and $t_1$ is the
+synoptic time of the analysis.
+Subscripts $a$, $b$, and $\delta$ denote the analysis, the
+background, and the FGAT increments, respectively.
+Since $V_a(t)$ is only needed to simulate observations \eqr{fgat}
+needs only be evaluated at the observation locations.
+Therefore we have added $\alpha$, $u_{\delta}$, and $v_{\delta}$ to
+the VAM observation data structure.
+Preprocessors should  set  $\alpha=1$, $u_{\delta}=0$, and
+$v_{\delta}=0$ so that there is no time interpolation.
+\computer{FGAT\_ADD} is designed to calculate $\alpha$, $u_{\delta}$, and
+$v_{\delta}$ for a variety of options governing the time
+interpolation.
+
+In what follows we determine $\alpha$ and $V_{\delta}$ for linear or
+quadratic time interpolation, and for FGAT or analysis time
+interpolation.
+Three possible modes of operation are then described.
+
+\xxxx {Three point time interpolation}
+
+Suppose we are given data values $(x_0, x_1, x_2)$ at three times
+$(t_0, t_1, t_2)$.
+The interpolated value is linear in the data, so we may write
+ \eql{three}{x(t) = c_0(t) x_0 + c_1(t) x_1 + c_2(t) x_2 .}
+In the linear case one of $(c_0, c_2)$ will be zero and the
+other $c_k$ will vary linearly with $t$.
+In the quadratic case the $c_k$ are quadratic functions of time.
+
+To determine the $c_k$ we use the Lagrange form of the collocating
+polynomial of degree $n$ for data points  $x_0, x_1, \ldots x_n$:
+ \eql{Lagrange}{x(t) = \sum_{k=0}^n x_k
+     \left[\prod_{i \ne k} (t-t_i) \right]
+     \left[\prod_{i \ne k} (t_k-t_i) \right]^{-1}
+   = \sum_{k=0}^n c_k(t) x_k .}
+Note that each $c_k$ is a degree $n$ polynomial in $t$ and that
+$c_k(t_i) = \delta_{ik}$ thereby ensuring collocation.
+
+For our problem $t_2 - t_1 = t_1 - t_0 = \delta t$.
+Then our results for $c_k$ are most concise if we center and normalize
+time according to 
+ \eql{time}{\Delta = (t - t_1)/\delta t .}
+There are three cases to consider.
+For linear interpolation between $t_0$ and $t_1$ we have $(c_0 =
+-\Delta, c_1 = \Delta + 1, c_2 = 0)$.
+For linear interpolation between $t_1$ and $t_2$ we have $(c_0 = 0, c_1
+= 1 - \Delta, c_2 = \Delta)$.
+For quadratic interpolation between $t_0$ and $t_2$ we have $(c_0 =
+\Delta(\Delta - 1)/2, c_1 = -(\Delta + 1)(\Delta - 1), c_2 = (\Delta +
+1)\Delta/2)$.
+Since $\sum c_k = 1$ we can always calculate $c_1$ as $1-(c_0 + c_2)$.
+
+\xxxx {FGAT time interpolation}
+
+Since the analysis increment is fixed with respect to time we may
+write the analysis at any time as the sum of the background at that
+time plus the analysis increment:
+ \eql{fgat1}{V_a(t) = V_b(t) + [V_a(t_1) - V_b(t_1) .}
+In terms of the background values at the three time levels we have
+ \eql{fgat2}{V_a(t) = V_a(t_1) + c_0(t) V_b(t_0) + (c_1(t) - 1)
+     V_b(t_1) +  c_2(t) V_b(t_2) .}
+Comparing this result with \eqr{fgat} we see that $\alpha = 1$ and
+$V_{\delta} = c_0(t) V_b(t_0) + (c_1(t) - 1) V_b(t_1) + c_2(t)
+V_b(t_2)$.
+
+\xxxx {Analysis time interpolation}
+
+For analysis time interpolation we simply have:
+ \eql{anal}{V_a(t) = c_0(t) V_b(t_0) + c_1(t) V_a(t_1) +  c_2(t) V_b(t_2) .}
+Comparing this result with \eqr{fgat} we see that $\alpha = c_1(t)$
+and $V_{\delta} = c_0(t) V_b(t_0) + c_2(t) V_b(t_2)$.
+
+\xxxx {Modes of operation}
+
+Usually the analysis is applied sequentially.
+This allows us to consider three modes of operation, different only
+in how $V_b(t_0)$ and $V_b(t_2)$ are defined.
+In all three modes $V_b(t_1)$ should be defined as the \apriori\
+background.
+In the \emph{analysis mode} $V_b(t_0)$ and $V_b(t_2)$ are both the
+\apriori\ background.
+In the \emph{filter mode} $V_b(t_0)$ is the result of the analysis
+determined at the previous synoptic time.
+In the \emph{smoother mode}, after a filter mode sequence, we filter
+again, but backwards in time so that $V_b(t_0)$ is the result of the
+forward filter and $V_b(t_2)$ is the result of the backwards filter.
+
+\xxx {FGAT assessment\secl{assess}}
+
+The VAM using FGAT was tested on eight cases in the North Atlantic using
+\qscat\ data.  For each case, a small data window, generally about
+\degrees{12} of longitude by \degrees{8} of latitude, was chosen to
+highlight a flow feature in the surface winds.
+
+We compare VAM-selected ambiguities (\ie, those closest to
+the VAM analysis) to JPL-selected ambiguities.  JPL uses
+time-interpolated surface wind analyses to seed their ambiguity
+removal.  So, we expect VAM-FGAT (which uses a time-interpolated
+background for evaluating misfit) to result in ambiguity selections
+which are more similar to JPL-selections than VAM without FGAT.  VAM
+without FGAT (we call it "First Guess at Background Time" (FGBT)) may
+misplace a feature if the scatterometer data is far in time from the
+analysis time.
+
+The first four cases don't show much impact from using FGAT.
+The fifth case (00 UTC 21 October 2003) shows a beneficial
+impact---ambiguity selection is more like JPL's.
+The sixth case (18 UTC 21 October 2003) is clearly a beneficial
+impact---ambiguity selection is more like JPL's and a linear feature
+is not moved.
+In the seventh case (00 UTC 26 October 2003), the scatterometer winds
+are at odds with the background and the VAM FGAT analysis opts for
+another solution which produces a different set of ambiguity
+selections.
+In the eight case and last case (06 UTC 26 October 2003), the analysis
+was performed using a much bigger data window.
+VAM FGAT helps position several features visible in the flow field
+which are more in line with the position as found in JPL-selected
+ambiguities.
+
+\TBD{Add figures and figure references for these cases}
+
+To document the effects of using FGAT in the VAM, the statistics below
+compare the closest scatterometer ambiguity to the background (or
+analysis) to the background (or analysis) interpolated to the
+scatterometer data location.  
+The two successive revs (22659 and 22660) that we analyze are +18 and
++118 minutes, respectively, away from the valid analysis time (0600
+UTC 26 October 2003).
+
+In general, FGAT improves the fit of data to the first guess
+and the analysis.  But significant improvement (at the 95\% confidence
+level) is seen for rev 22660 only, and then only for background wind speed
+and background and analysis wind direction.  (Significant improvements
+in the tables below are marked with an asterisk.)  Even so, the signal
+is clearly in the right direction, especially for rev 22660 whose valid
+time is far from the analysis time.  This analysis is presented only
+for one case, and it is likely that there are other cases where FGAT
+might have a larger impact.
+
+For scalar wind speed the statistics for
+(closest.to.background - background) are:
+\begin{verbatim}
+                   N   mean    mae     sd   rmse   min     max
+
+FGBT rev 22659: 4784  1.680  1.680  1.253  2.096  0.024  15.945
+FGAT rev 22659: 4784  1.672  1.672  1.251  2.088  0.035  15.912
+
+FGBT rev 22660: 7424  2.650  2.650  2.719  3.797  0.015  22.055
+FGAT rev 22660: 7424  2.503* 2.503  2.722  3.698  0.012  21.941
+\end{verbatim}
+and for (closest.to.analysis - analysis):
+\begin{verbatim}
+                   N   mean    mae     sd   rmse   min     max
+
+FGBT rev 22659: 4784  1.415  1.415  1.156  1.827  0.009  15.166
+FGAT rev 22659: 4784  1.419  1.419  1.150  1.827  0.029  15.144
+
+FGBT rev 22660: 7424  1.967  1.967  2.408  3.109  0.024  21.602
+FGAT rev 22660: 7424  1.957  1.957  2.370  3.074  0.013  21.387
+\end{verbatim}
+For wind direction the statistics for
+ABS(closest.to.background - background) are:
+\begin{verbatim}
+                   N   mean    mae     sd   rmse   min     max
+
+FGBT rev 22659: 4784  7.903  7.903  8.458 11.575  0.002  95.164
+FGAT rev 22659: 4784  8.024  8.024  8.493 11.684  0.010  93.550
+
+FGBT rev 22660: 7424 11.020 11.020 12.041 16.323  0.001 115.100
+FGAT rev 22660: 7424 10.531*10.531 11.849 15.853  0.004 119.711
+\end{verbatim}
+and for ABS(closest.to.analysis - analysis):
+\begin{verbatim}
+                   N   mean    mae     sd   rmse   min     max
+
+FGBT rev 22659: 4784  6.982  6.982  8.232 10.794  0.000  93.187
+FGAT rev 22659: 4784  6.778  6.778  8.268 10.691  0.001  93.607
+
+FGBT rev 22660: 7424  8.650  8.650 10.910 13.923  0.000 104.378
+FGAT rev 22660: 7424  8.383* 8.383 10.861 13.720  0.001 123.343
+\end{verbatim}
+
+\xx {Data assimilation of SSM/I winds \secl{SSMI}}
+
+In previous work we treated SSM/I wind speed data as a special type
+of scatterometer data.
+For the current project we have defined a microwave ocean surface wind speed
+observation operator appropriate for SSM/I, TMI, AMSR, and other
+similar instrument.
+This new observations operator can also be applied to any wind speed
+data, eg, from WINDSAT.
+With these additions the VAM recognizes the following data types:
+\computer{'convention', 'ambiguous', 'sigma0', 'ssmi','tmi', 'amsr'}.
+SSM/I, AMSR, and TMI will all be handled similarly, but considering
+them different data types allows us to weight them differently.
+These weights should account for data density and data quality.
+
+For this activity we designed, coded, and tested the new observation
+operator.
+We were able to reuse code developed for the scatterometer observation
+operator in this task thanks to the modular design of the VAM.
+We reviewed the new VAM preprocessor modules developed by Joe
+Ardizzone to ingest SSM/I wind speed data from RSS.
+
+The VAM including the SSM/I observation operator and test
+cases were delivered to Joe Ardizzone at NASA Goddard.
+
+\xx {Date/time consistency checks \secl{date-time}}
+
+We designed, coded, and tested enhancements to the VAM and
+preprocessing codes to allow for checking that input data sets
+date/times are consistent.
+
+Time stored in the data structure for each datum should be time in
+seconds relative to some epoch.
+This "zero" time could be the synoptic date/time of the analysis or 00 GMT 1
+January 1985 or any other particular time.
+In the VAM time for a datum is only used for FGAT and the same units
+of time must be used to specify \computer{t2} and \computer{dt} in the
+\computer{interp} namelist.
+
+The consistency enhancement adds a call to a routine called
+\computer{date\_time\_check} (in \computer{vam\_obs\_mod.f}) before each task.
+This routine returns a status indicator.
+A positive  status value indicates the number of obs data 
+date/times that do not match the grid date/time.
+A value of 0 indicates all date/times match.
+A value of -1 indicates the grid is not yet defined, -2 that there are
+no observation data yet, and -3 that both grid and observation data
+are missing.
+If a positive value is returned the VAM immediately stops.
+If the status is negative and the requested task is CALCulate the VAM
+immediately stops.
+
+FGAT checks the date/time pair in the grid against the three date/time 
+pairs in namelist \computer{interp}.
+\computer{t2} should be consistent with \computer{idate2/itime2},
+\computer{t2-dt} with \computer{idate1/itime1} and \computer{t2+dt}
+with \computer{idate3/itime3}.
+Code to generate \computer{idate1, itime1, idate2,} \ldots, from
+\computer{t2} and \computer{dt} could be added by converting the epoch
+time (\ie, seconds in the epoch for \computer{dt, t2}, and observation
+time) to an date/time pair.
+
+The VAM including the data/time consistency enhancements and test
+cases were delivered to Joe Ardizzone at NASA Goddard.
+
+\end{document}

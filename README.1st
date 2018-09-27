@@ -1,0 +1,26 @@
+
+# Top-level README file for VAM99 software release.
+
+#  23 January 2004        M. Leidner       AER, Inc.
+
+# The VAM is a Variational Analysis Method for combining surface wind
+# observations with an a priori estimate of the vector surface wind field.
+
+# This software should be compiled, run on canned test case data and
+# validated to ensure proper installation.  A few shortcuts were taken
+# in creating this software package:
+
+ 1. I did not include raw datasets (e.g., GRIB input files at two
+bracketing time levels, L2B NSCAT data files).  Instead, the input
+data present in the distribution have been preprocessed already and
+are ready for ingest by the VAM.
+
+ 2. I did not include sample VAM outputs from SGI or Linux platforms,
+only Sun.
+
+# Documentation of the science and algorithm design may be found in
+# the "Software Requirements Specification" in doc/.
+
+# The instructions to make executables and run a canned test case are
+# in r907/doc/README.
+

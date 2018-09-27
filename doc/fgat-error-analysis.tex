@@ -1,0 +1,396 @@
+%x Emacs: -*- mode:outline; outline-regexp:"[%\\\\]x+ " -*-
+%  RCS: $Id: fgat-error-analysis.tex,v 1.3 2006/09/13 22:06:24 leidner Exp $
+%  Copy of RCS: Id: progress-Aug04.tex,v 1.4 2004/09/29 15:18:05 rnh Exp
+%  p1219 progress report as of the end of August 2004.
+
+\documentclass[12pt,titlepage]{article}
+
+\input{format}
+\input{abbrev}
+\usepackage[dvips]{color}
+\usepackage{ametsoc}
+\usepackage[final]{graphicx}
+\usepackage{rotate, epsf}
+
+\graphicspath{
+      {/project/dap/fig/p1326/}}
+
+\newcommand{\authors}{Ross N. Hoffman and S. Mark Leidner}
+\newcommand{\RCSid}{$Id: fgat-error-analysis.tex,v 1.3 2006/09/13 22:06:24 leidner Exp $}
+\newcommand{\RCSrevision}{$Revision: 1.3 $}
+\newcommand{\support}{\thanks{ 
+        Supported by NASA contract NAS5-32953.
+        AER, Inc. intends to retain % (has retained)
+        patent rights to certain aspects of the algorithms described herein
+        under FAR 52.227-11.}}
+\newcommand{\docinfo}{\thanks{ 
+        To be submitted to Goddard Space Flight Center (NASA/GSFC),
+        Greenbelt, MD 20771.}}
+\newcommand{\rightsinfo}[1]{\thanks{ 
+        Copyright \copyright\ #1.  
+        Work in Progress.  All Rights Reserved.}}
+\newcommand{\aerinfo}{\thanks{
+        Atmospheric and Environmental Research (AER), Inc.
+        131 Hartwell Avenue, Lexington, MA 02421-3126.
+        Phone: (781)-761-2288   FAX: (781)-761-2299
+        Net: \computer{http://www.aer.com/}.}}
+\newcommand{\revinfo}[1]{\thanks{
+        AER document version control: \computer{P1326, #1}.
+        Formatting version \computer{$Id: fgat-error-analysis.tex,v 1.3 2006/09/13 22:06:24 leidner Exp $}.}}
+\newcommand{\xtitle}[4]{
+        \title{Support for the Development of Cross-Calibrated, \\
+               Multi-Platform Ocean Surface Wind Products
+% For delivery modify \docinfo and eliminate \rightsinfo
+        #1$\!\!$\docinfo} 
+        \author{#2\rightsinfo{#2} \\
+        Atmospheric and Environmental Research, Inc.\aerinfo }
+        \date{#3\revinfo{#4} \\~\\ \today}
+        \maketitle
+        \markboth {AER, Inc.\ NASA FGAT for the VAM}
+        {#1 (#3)}
+        \begin{titlepage} \mbox{~} \end{titlepage}
+}
+
+\newcommand{\x}[1]{\xtitle{#1}{\authors}{\RCSrevision}{\RCSid}}
+
+\begin{document}
+
+\x {}
+
+\xx {Introduction}
+
+ This is a report on AER's support of
+the generation of cross-calibrated, multi-platform ocean surface wind
+products at NASA Goddard.
+ The project at NASA Goddard aims to generate high-quality,
+high-resolution, vector winds over the world's oceans between the
+years 1987 and 2007 using {\em in situ} and remotely sensed wind
+observations.
+This report summarizes one task supported by AER project number 1326.
+
+ AER is helping specifically by enhancing the capability and
+optimizing the use of a two-dimensional data assimilation application
+for surface winds called the variational analysis method (VAM).
+ The VAM is at the center of the project's analysis procedures for
+combining observations of the wind over the world's oceans.
+
+In this report, the results of analysis and software development for
+accounting for time interpolation errors of the First Guess at the
+Appropriate Time (FGAT) procedure are detailed.
+
+First \secr{FGAT} we repeat a description of the FGAT procedure
+that we previously reported on (in our August 2004 progress report).
+
+Second in \secr{errors} we describe the calculation of FGAT time
+interpolation errors for ocean surface winds from several detailed
+MM5 mesoscale model forecasts.
+(These forecasts were available from another project.)
+It is clear from this analysis that ocean surface wind errors---$u$, $v$,
+and $V$----increase rapidly with time offset and asymptote at about
+\ms{1} by 3 hours.
+
+Finally, in \secr{Jnew} we reformulate the VAM obs functions to
+include this effect.
+
+\xx {Data assimilation using the First Guess at the Appropriate Time (FGAT) \secl{FGAT}}
+
+The First Guess at the Appropriate Time (FGAT) procedure was designed
+and coded previously.
+The design is detailed below.
+
+\xxx {FGAT design\secl{design}}
+
+FGAT can be used to account for the first order effects of the
+asynopticity of the ocean surface wind observations.
+For a basic FGAT procedure one uses the time interpolated first guess
+to define the observation increments, but assumes the analysis
+increments are constant with respect to time.
+Another approach is to interpolate in time through the analysis (\ie,
+the analysis being determined by the VAM at the synoptic time) at the
+center time and through the fixed earlier and later estimates of the
+wind field.
+As described below both cases can be written as
+ \eql{fgat}{V_a(t) = \alpha V_a(t_1) + V_{\delta}.}
+Here $V = (u,v)$ is the surface wind, $t$ is time, and $t_1$ is the
+synoptic time of the analysis.
+Subscripts $a$, $b$, and $\delta$ denote the analysis, the
+background, and the FGAT increments, respectively.
+Since $V_a(t)$ is only needed to simulate observations \eqr{fgat}
+needs only be evaluated at the observation locations.
+Therefore we have added $\alpha$, $u_{\delta}$, and $v_{\delta}$ to
+the VAM observation data structure.
+Preprocessors should  set  $\alpha=1$, $u_{\delta}=0$, and
+$v_{\delta}=0$ so that there is no time interpolation.
+\computer{FGAT\_ADD} is designed to calculate $\alpha$, $u_{\delta}$, and
+$v_{\delta}$ for a variety of options governing the time
+interpolation.
+
+In what follows we determine $\alpha$ and $V_{\delta}$ for linear or
+quadratic time interpolation, and for FGAT or analysis time
+interpolation.
+Three possible modes of operation are then described.
+
+\xxxx {Three point time interpolation}
+
+Suppose we are given data values $(x_0, x_1, x_2)$ at three times
+$(t_0, t_1, t_2)$.
+The interpolated value is linear in the data, so we may write
+ \eql{three}{x(t) = c_0(t) x_0 + c_1(t) x_1 + c_2(t) x_2 .}
+In the linear case one of $(c_0, c_2)$ will be zero and the
+other $c_k$ will vary linearly with $t$.
+In the quadratic case the $c_k$ are quadratic functions of time.
+
+To determine the $c_k$ we use the Lagrange form of the collocating
+polynomial of degree $n$ for data points  $x_0, x_1, \ldots x_n$:
+ \eql{Lagrange}{x(t) = \sum_{k=0}^n x_k
+     \left[\prod_{i \ne k} (t-t_i) \right]
+     \left[\prod_{i \ne k} (t_k-t_i) \right]^{-1}
+   = \sum_{k=0}^n c_k(t) x_k .}
+Note that each $c_k$ is a degree $n$ polynomial in $t$ and that
+$c_k(t_i) = \delta_{ik}$ thereby ensuring collocation.
+
+For our problem $t_2 - t_1 = t_1 - t_0 = \delta t$.
+Then our results for $c_k$ are most concise if we center and normalize
+time according to 
+ \eql{time}{\Delta = (t - t_1)/\delta t .}
+There are three cases to consider.
+For linear interpolation between $t_0$ and $t_1$ we have $(c_0 =
+-\Delta, c_1 = \Delta + 1, c_2 = 0)$.
+For linear interpolation between $t_1$ and $t_2$ we have $(c_0 = 0, c_1
+= 1 - \Delta, c_2 = \Delta)$.
+For quadratic interpolation between $t_0$ and $t_2$ we have $(c_0 =
+\Delta(\Delta - 1)/2, c_1 = -(\Delta + 1)(\Delta - 1), c_2 = (\Delta +
+1)\Delta/2)$.
+Since $\sum c_k = 1$ we can always calculate $c_1$ as $1-(c_0 + c_2)$.
+
+\xxxx {FGAT time interpolation}
+
+Since the analysis increment is fixed with respect to time we may
+write the analysis at any time as the sum of the background at that
+time plus the analysis increment:
+ \eql{fgat1}{V_a(t) = V_b(t) + [V_a(t_1) - V_b(t_1)] .}
+In terms of the background values at the three time levels we have
+ \eql{fgat2}{V_a(t) = V_a(t_1) + c_0(t) V_b(t_0) + (c_1(t) - 1)
+     V_b(t_1) +  c_2(t) V_b(t_2) .}
+Comparing this result with \eqr{fgat} we see that $\alpha = 1$ and
+$V_{\delta} = c_0(t) V_b(t_0) + (c_1(t) - 1) V_b(t_1) + c_2(t)
+V_b(t_2)$.
+
+\xxxx {Analysis time interpolation}
+
+For analysis time interpolation we simply have:
+ \eql{anal}{V_a(t) = c_0(t) V_b(t_0) + c_1(t) V_a(t_1) +  c_2(t) V_b(t_2) .}
+Comparing this result with \eqr{fgat} we see that $\alpha = c_1(t)$
+and $V_{\delta} = c_0(t) V_b(t_0) + c_2(t) V_b(t_2)$.
+
+\xxxx {Modes of operation}
+
+Usually the analysis is applied sequentially.
+This allows us to consider three modes of operation, different only
+in how $V_b(t_0)$ and $V_b(t_2)$ are defined.
+In all three modes $V_b(t_1)$ should be defined as the \apriori\
+background.
+In the \emph{analysis mode} $V_b(t_0)$ and $V_b(t_2)$ are both the
+\apriori\ background.
+In the \emph{filter mode} $V_b(t_0)$ is the result of the analysis
+determined at the previous synoptic time.
+In the \emph{smoother mode}, after a filter mode sequence, we filter
+again, but backwards in time so that $V_b(t_0)$ is the result of the
+forward filter and $V_b(t_2)$ is the result of the backwards filter.
+
+\xxx {FGAT assessment\secl{assess}}
+
+The VAM using FGAT was tested extensively and some anomalies were
+found.
+
+Problems typically occur when overlapping swaths (especially of wind
+speed only data) are offset in time by several hours.
+
+\xx {Analysis of FGAT errors\secl{errors}}
+
+To quantify FGAT errors, we use mesoscale forecasts generated by the
+Weather Research and Forecast (WRF) model.
+ We consider hourly WRF forecasts to be truth, and then measure
+the difference between linear-in-time interpolated forecast fields
+($\delta t =$ 6 h) and the ``truth''.
+ We compute the FGAT error as an RMS of surface wind field
+differences, $(X_i - X_t)$, where $X$ is one of ($u$, $v$, $|V|$),
+and subscripts $i$ and $t$ refer to the linearly interpolated 
+values and truth, respectively.
+ We take these differences to be a measure of the error introduced by
+the linear time-interpolated FGAT described in \secr{FGAT}
+
+We applied this idea to three different meteorological conditions
+in three different geographic regions, to sample the range of
+typical FGAT errors.
+ The WRF forecast domains are all 201 $\times$ 201 $\times$ 31
+gridpoints with a \mks{27}{km} grid spacing in the horizontal.
+ The upper lid of the model is \mks{50}{hPa}.
+ Four-day forecasts were generated for each region, using GFS FNL
+analyses to supply initial and lateral boundary conditions.
+ Only forecasts after the first 24 hours were considered to avoid
+any spin-up features in the model fields.
+
+ \figr{wind-diffs} shows sample surface wind fields from
+each domain (left column) and corresponding differences (right
+column) between 3 hour interpolated surface winds and the
+``truth'' (i.e., WRF forecasts).
+ The S.~Indian Ocean case shows differences that are clearly
+associated with evolving synoptic systems at this time.
+ Whereas the E.~Tropical Pacific case shows the smallest
+differences where the evolution of the atmosphere is less dynamic.
+
+ \figr{FGATerrors} shows the growth of FGAT errors for
+surface wind speeds away from analysis times (0 and 6 UTC).
+ Two 6-hour time periods were considered (columns 1 and 2) for
+each of three cases (rows 1, 2 and 3).
+ Note that the difference between $u$, $v$, and $|V|$ and between
+different forecast segments for a single synoptic situation are small
+compared to differences between the three synoptic situations studied.
+
+\xx {Accommodating FGAT errors in the VAM\secl{Jnew}}
+
+  \renewcommand{\vardef}[3]{$ {#1} $ is the {#2}}
+  \newcommand{\Obs}{Observation}
+  \newcommand{\obs}{observation}
+
+According to \cite{HofLH+03} the \obs\ function is given by the sum of
+squared differences between simulated (\ie, calculated from the
+analysis) and data values normalized by the estimated \obs\ (and
+representativeness) error(s).
+ For example, for conventional data,
+ \eql{Jconv}{ \Jm{CONV} = \sum \frac{(u_a - u_o)^2}{s_u^2} +
+ \frac{(v_a - v_o)^2}{s_u^2} . }
+ Here
+ \vardef{(u_a, v_a)}{analyzed wind interpolated to the \obs\
+locations,}{m s^{-1}}
+ \vardef{(u_o, v_o)}{observed wind, and}{m s^{-1}}
+ \vardef{s_u}{wind component error standard deviation.}{m s^{-1}}
+
+In this formulation $s_u$ implicitly accounts for observation error,
+representativeness errors, and interpolation errors.
+When using FGAT, the FGAT time interpolation errors vary significantly
+from observation to observation, so off time observations should be
+given lower weights by inflating the observation error standard
+deviation.
+Assuming the FGAT time interpolation errors are uncorrelated with the
+observational errors already included in $s_u$ we can account for
+these errors simply by replacing $s_u^2$ in \eqr{Jconv} with $s_u^2 +
+s_{FGAT}^2$. 
+
+In the VAM $s_u$ is taken to be a constant \mks{1}{m s^{-1}} and
+knowledge of the \obs\ error standard deviation is absorbed into
+\glm{CONV}.
+If we consider just one term from \eqr{Jconv}, the \computer{FORTRAN}
+code looks like
+\eql{Jold}{ \Jm{OLD} = \glm{CODE} (u_a - u_o)^2 ,}
+where $\lambda = s_u^2 \glm{CODE}$.
+Therefore we will modify each similar term to be
+\eql{Jnew1}{ \Jm{NEW} = \lambda \frac{(u_a - u_o)^2}{s_u^2 +
+s_{FGAT}^2} = \glm{CODE} \frac{(u_a - u_o)^2}{1+(s_{FGAT}/s_u)^2} ,}
+or
+\eql{Jnew}{ \Jm{NEW} = \glm{CODE} (u_a - u_o)^2/V_{\gamma},}
+where $V_{\gamma}$ is the variance inflation factor.
+
+It is clear from the results of \secr{errors} that rms errors of ocean
+surface wind speed and components have a nearly parabolic shape when
+plotted as a function of time between $t_0$ and $t_1$.
+Therefore we can model the FGAT time interpolation error standard
+deviation as
+ \eql{sfgat}{s_{FGAT} = s_3\left\{1 - \left(1 - \frac{|t|}{(\delta t/2)}\right)^2\right\} . }
+Here, as before, $t$ is time and $\delta t$ is the time between
+analysis times.
+Also $s_3$ is the maximum value of the FGAT error that occurs at an
+offset of 3 hours.
+Based on \eqr{sfgat} we then have
+\eql{vinf}{V_{\gamma} = 1 + \left[\frac{s_3}{s_u}
+\left\{1 - \left(1 - \frac{|t|}{(\delta t/2)}\right)^2\right\}\right] .}
+
+Since $s_3$ varies quite a bit from synoptic situation to synoptic
+situation and it would be difficult to quantify this variability and
+since this variability dwarfs other variabilities, we will henceforth
+approximate \ms{s_3=1}.
+It remains to estimate $s_u$.
+Typical values of $s_u$ for wind components are 1 to \ms{2} and for
+wind speed from 0.7 to \ms{1.5}.
+Since we are using large $\lambda$ values to closely fit the data we
+are essentially assuming that $s_u$ values are small and we will
+choose to use values at the low end of the quoted ranges in accounting
+for FGAT interpolation errors.
+
+\bibliography{ams-abbrev,current,nwp,question}
+\bibliographystyle{ametsoc}
+
+\newcounter{fig}
+
+\newcommand{\fitem}[3]{\item\label{fig:#1}\begin{minipage}[t]{6in}
+ {\slshape {#2}} %%%  {\bf[#1]}
+ \\ \medskip \\ \centerline{{\sffamily\upshape\bfseries {#3}}}\end{minipage}}
+
+\begin{list}{\bfseries\upshape Fig.~\arabic{fig}:}
+ {\usecounter{fig}
+  \setlength{\labelwidth}{0.25in}
+  \setlength{\leftmargin}{0cm}
+  \setlength{\labelsep}{0.25in}
+  \setlength{\parsep}{0.5cm plus0.2cm minus0.1cm}
+  \setlength{\itemsep}{0.5cm plus0.2cm}}
+
+ \fitem{wind-diffs}
+ {WRF surface winds (left column) and 3-hr (Interpolated-Truth) surface
+wind speed differences (right column) for three different cases.}
+ {\setlength{\tabcolsep}{1pt}
+  \begin{tabular}{|c|c|c|} \hline
+  \ylab{\makebox[10mm]{\rule[-4mm]{0mm}{10mm}}} &
+  \tbox{Surface Winds} & \tbox{FGAT-Truth} \\ \hline
+  \ylab{Typhoon Meranti} &
+  \tbox{\includegraphics[bb=52 142 558 648, clip=true, scale=0.3]
+         {Meranti2004080800-back.eps}} &
+  \tbox{\includegraphics[bb=25 192 597 727, clip=true, scale=0.3, angle=-90]
+         {meranti+3hr.eps}}
+         \\ \hline \hline
+  \ylab{S. Indian Ocean} &
+  \tbox{\includegraphics[bb=52 142 558 648, clip=true, scale=0.3]
+         {SIndian2004110100-back.eps}} &
+  \tbox{\includegraphics[bb=25 192 597 727, clip=true, scale=0.3, angle=-90]
+         {s1101+3hr.eps}}
+         \\ \hline \hline
+  \ylab{E. Tropical Pacific} &
+  \tbox{\includegraphics[bb=52 142 558 648, clip=true, scale=0.3]
+         {TropPac2005030700-back.eps}} &
+  \tbox{\includegraphics[bb=25 192 597 727, clip=true, scale=0.3, angle=-90]
+         {t0700+3hr.eps}} \\ \hline 
+  \end{tabular}}
+
+ \fitem{FGATerrors}
+ {FGAT error versus time for two time periods (columns 1 and 2) for
+each of three cases (three rows).}
+ {\setlength{\tabcolsep}{1pt}
+  \begin{tabular}{|c|c|c|} \hline
+  \ylab{\makebox[10mm]{\rule[-4mm]{0mm}{10mm}}} &
+  \tbox{8 August 2004} & \tbox{9 August 2004} \\
+  \ylab{Typhoon Meranti} &
+  \tbox{\includegraphics[bb=70 90 730 530, clip=true, scale=0.3]
+         {Meranti2004080800.eps}} &
+  \tbox{\includegraphics[bb=70 90 730 530, clip=true, scale=0.3]
+         {Meranti2004080900.eps}}
+         \\ \hline \hline
+  \ylab{\makebox[10mm]{\rule[-4mm]{0mm}{10mm}}} &
+  \tbox{1 November 2004} & \tbox{2 November 2004} \\
+  \ylab{S. Indian Ocean} &
+  \tbox{\includegraphics[bb=70 90 730 530, clip=true, scale=0.3]
+         {SIndian2004110100.eps}} &
+  \tbox{\includegraphics[bb=70 90 730 530, clip=true, scale=0.3]
+         {SIndian2004110200.eps}}
+         \\ \hline \hline
+  \ylab{\makebox[10mm]{\rule[-4mm]{0mm}{10mm}}} &
+  \tbox{7 March 2005} & \tbox{8 March 2005} \\
+  \ylab{E. Tropical Pacific} &
+  \tbox{\includegraphics[bb=70 90 730 530, clip=true, scale=0.3]
+         {TropPac2005030700.eps}} &
+  \tbox{\includegraphics[bb=70 90 730 530, clip=true, scale=0.3]
+         {TropPac2005030800.eps}} \\ \hline 
+  \end{tabular}}
+
+\end{list}
+
+\end{document}

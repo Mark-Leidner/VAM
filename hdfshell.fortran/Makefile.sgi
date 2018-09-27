@@ -1,0 +1,33 @@
+#	SGI IRIS4 Makefile
+MACHINE		=	IRIS4
+SYS_DEF		= 	-lm
+FORTRAN_MAKE	= 	yes	
+
+#	Edit the next line and point to the location of HDF library version 
+#	4.0 or higher
+#	This packet will not compile unless you have HDF 4.0 or Higher
+
+########################################################################
+# NOTE!!!!!!!!	CHANGE this directories to reflect your environment 
+########################################################################
+
+HDFDIR	= /opt/hdf4.1r2-n32
+HDFINC	= /opt/hdf4.1r2-n32/include
+SHELLLIB = lib
+
+########################################################################
+#  NOTE!!!!!	Do not change below
+########################################################################
+
+all:
+	cd hdfshell; make MACHINE=$(MACHINE) SYS_DEF=$(SYS_DEF) \
+	HDFDIR=$(HDFDIR)  HDFINC=$(HDFINC) CC=$(CC) SHELLLIB=$(SHELLLIB)
+	@echo "	"
+	@echo "	###########################################"
+	@echo "	NSCATHDF (HDFSHELL) library compiled sucessful"
+	@echo "	###########################################"
+	@echo "	"
+clean:
+	cd hdfshell; make clean
+
+

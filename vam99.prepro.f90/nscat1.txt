@@ -1,0 +1,37 @@
+Header file for sigma0 lookup table 
+model function ids for which this table is valid (add as many as needed):
+modfns = 99
+modfns = 100
+
+lcubic = .T.		!Flag for doing cubic interpolation
+
+This header for a an NSCAT-style tabular model function (sass2.dat)
+as described in readmf.f:
+
+	real table(8:33,1:50,0:36,2)
+c
+c	table : table(inc.angle, wind speed, relative azimuth,polarization)
+c	      : ratio-space (not dB!!) sigma0
+c
+c	where
+
+c	  inc.angle  : incidence angle, range : 16 to 66 deg by 2 deg
+        Theta0 = 16
+        DTheta = 2
+        NTheta = 26
+
+c	  wind speed : speed from 1-50 m/s in 1 m/s steps
+            U0 = 1
+            DU = 1
+            NU = 50
+
+c	  relative azimuth : direction w.r.t. antenna beam 
+          Phi0 = 0
+          DPhi = 5
+          NPhi = 37
+
+c	  polarization : 1 (V-pol), 2 (H-pol) 
+(hardwired, not part of header file)
+
+c!#~   ZS0Tbl     Reference heights for S0 table (m)
+        ZS0Tbl = 10

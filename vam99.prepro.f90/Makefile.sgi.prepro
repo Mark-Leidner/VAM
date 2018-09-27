@@ -1,0 +1,171 @@
+#Fortran options
+FFLAGS =  -O3 -I$(MAIN_DIR) -I$(GRIB_DIR)  #NOTE: recursively expanded variables
+F90 = f90
+F77 = f77
+LDFLAGS =
+
+ifeq ($(strip $(MAIN_DIR)),)	#Default values if not provided from environment
+ifeq ($(strip $(VAM99_DIR)),)
+	VAM99_DIR:= ..
+endif
+	MAIN_DIR:= $(VAM99_DIR)/vam99.main.f90
+endif
+ifeq ($(strip $(GRIB_DIR)),)	#Default values if not provided from environment
+ifeq ($(strip $(SRC_DIR)),)
+	SRC_DIR:= ..
+endif
+	GRIB_DIR:= $(SRC_DIR)/native
+endif
+
+#Default values, only to be overridden by command-line arguments (not by environment variables):
+TAPHOME:= $(GRIB_DIR)/native/tap
+TAPC:= $(TAPHOME)/C
+TAPFORT:= $(TAPHOME)/fortran
+##
+
+#NOTE: $(GRIB_DIR)/grid_hdr_io.o is compiled in $(GRIB_DIR) using the module files for 
+#      config_mod, string_mod in $(TAPFORT), but we are linking the object
+#      codes from the vam main directory $(MAIN_DIR).  This may cause problems 
+#      if the codes are not kept in sync.
+
+GRIB_OBJ = $(GRIB_DIR)/map_par_typ.o $(GRIB_DIR)/grid_hdr_typ.o \
+	$(GRIB_DIR)/grid_hdr_io.o \
+	$(GRIB_DIR)/put_grads_header.o $(GRIB_DIR)/endian.o $(GRIB_DIR)/delta_time.o
+
+TAP_OBJ = $(TAPFORT)/gribpa.o $(TAPFORT)/ijll.o 
+
+STR_OBJS = $(MAIN_DIR)/string_mod.o
+CNF_OBJS = $(sort $(STR_OBJS) $(MAIN_DIR)/config_mod.o)
+
+EXECS := test_prepro_conv reformat_grid vam_reformat restart_dp_sp \
+	obs_to_ascii dunbar_to_native reformat_qscat2b ave_time \
+	timeinterp_native reformat_qscat2a
+
+LIBS =	
+
+EXECS: $(EXECS)
+
+#!# Note: types.f module from MAIN_DIR used for compilation (-M), but no
+#!#       object code needs to be loaded for it
+OBS_MAIN_OBJS = obsio.o
+ALL_OBS_MAIN := $(sort $(STR_OBJS) $(patsubst %,$(MAIN_DIR)/%,$(OBS_MAIN_OBJS)) )
+
+test_prepro_conv: test_prepro_conv.o 
+	$(F90) $(FFLAGS) $(LDFLAGS) -o $@ $^ $(ALL_OBS_MAIN) $(LIBS)
+
+obs_to_ascii: obs_to_ascii.o 
+	$(F90) $(FFLAGS) $(LDFLAGS) -o $@ $^ $(ALL_OBS_MAIN) $(LIBS)
+
+restart_dp_sp: restart_dp_sp.o
+	$(F90) $(FFLAGS) $(LDFLAGS) -o $@ $^
+
+GRID_MAIN_OBJS = grid_ops.o wind_grid_stats_mod.o
+ALL_GRID_MAIN := $(CNF_OBJS) $(patsubst %,$(MAIN_DIR)/%,$(GRID_MAIN_OBJS))
+
+ave_time: ave_time.o
+	$(F90) $(FFLAGS) $(LDFLAGS) -o $@ $^ $(CNF_OBJS) $(GRIB_OBJ) $(TAP_OBJ) $(LIBS)
+
+reformat_grid: reformat_grid.o grid_ops_native.o
+	$(F90) $(FFLAGS) $(LDFLAGS) -o $@ $^ $(ALL_GRID_MAIN) $(GRIB_OBJ) $(TAP_OBJ) $(LIBS)
+
+dunbar_to_native: dunbar_to_native.o grid_ops_native.o
+	$(F90) $(FFLAGS) $(LDFLAGS) -o $@ $^ $(ALL_GRID_MAIN) $(GRIB_OBJ) $(TAP_OBJ) $(LIBS)
+
+timeinterp_native: timeinterp_native.o 
+	$(F90) $(FFLAGS) $(LDFLAGS) -o $@ $^ $(CNF_OBJS) $(GRIB_OBJ) $(TAP_OBJ) $(LIBS)
+
+# link with libraries
+##
+HDFDIR    = /opt/hdf4.1r2-n32
+HDFLIB    = $(HDFDIR)/lib
+HDFINC    = $(HDFDIR)/include
+HDFFLAGS = -L$(HDFLIB) -lmfhdf -ldf -ljpeg -lz
+SHELLLIB  = $(VAM99_DIR)/hdfshell.fortran/hdfshell/lib
+VAMLDFLAGS = -L../vam2d.fortran  -lvam2d \
+            -L../functionals.fortran  -lss \
+	    $(SHELLLIB)/nscatshell.a \
+	    $(HDFFLAGS)
+
+SYS_DEF   = -lnsl -lm
+
+# fortran options
+VAMFFLAGS = -w -r8 -g -C
+F77FLAGS  = -w -g -C -I$(HDFINC)
+CPPFLAGS  = -I../vam2d.fortran
+FOBJECTS = vam_reformat.o init_reformat.o getargs.o dump_event.o \
+	   dump_sldta.o dump_ptdta.o dump_nsbscat.o
+
+Fsmallf = $(patsubst %.o,%.f,$(FOBJECTS))
+
+reformat_qscat2b.o: reformat_qscat2b.f
+	$(F77) -c  $(F77FLAGS)  $^
+
+reformat_qscat2a.o: reformat_qscat2a.f
+	$(F77) -c $(F77FLAGS)  $^
+
+winds.o: winds.f
+	$(F77) -c  $(F77FLAGS) $^
+
+obsio.o: $(MAIN_DIR)/obsio.f
+	-/bin/cp $(MAIN_DIR)/obsio.f .
+	$(F77) -c  obsio.f
+	-/bin/rm -f obsio.f
+
+VAMLIBS : 
+	cd $(VAM99_DIR)/hdfshell.fortran ; \
+	make -f Makefile.sgi ; \
+	cd $(VAM99_DIR)/functionals.fortran ; \
+	gmake lib ; \
+	cd $(VAM99_DIR)/vam2d.fortran ; \
+	gmake lib
+
+FORCE = force_rebuild
+
+TARGET=vam_reformat
+
+$(TARGET) : VAMLIBS $(FOBJECTS) obsio.o
+	$(F77) $(FOBJECTS) obsio.o $(VAMFFLAGS) $(VAMLDFLAGS) $(SYS_DEF) -o $@
+
+reformat_qscat2b: reformat_qscat2b.o winds.o obsio.o
+	$(F77) reformat_qscat2b.o winds.o obsio.o $(HDFFLAGS) \
+	$(F77FLAGS) $(SYS_DEF)  -o $@
+
+reformat_qscat2a: reformat_qscat2a.o obsio.o
+	$(F77) reformat_qscat2a.o obsio.o $(HDFFLAGS) $(F77FLAGS) \
+	$(SYS_DEF)  -o $@
+
+force_rebuild :
+
+clean:
+	rm -f $(EXECS) *.o *.mod $(Fsmallf)
+
+cleanlibs :
+	cd $(VAM99_DIR)/hdfshell.fortran ; \
+	make -f Makefile.solaris clean
+	cd $(VAM99_DIR)/functionals.fortran ; \
+	gmake clean ; \
+	cd $(VAM99_DIR)/vam2d.fortran ; \
+	gmake clean
+
+clean_all: clean cleanlibs
+
+.SUFFIXES: $(SUFFIXES)
+
+.f.o:
+	$(F90) $(FFLAGS) -c $<
+
+%.o: %.F
+	$(F77) $(FFLAGS) $(CPPFLAGS) -c -fixedform  $<
+
+# The following lines created by running perl /home/nwp/NWP/bin/makef90depends.perl:
+dunbar_to_native.o: grid_ops_native.o
+reformat_grid.o: grid_ops_native.o
+ave_time.o: 
+dunbar_to_native.o: grid_ops_native.o
+grid_ops_native.o: 
+obs_to_ascii.o: 
+reformat_grid.o: grid_ops_native.o
+test_prepro_conv.o: 
+timeinterp_native.o: 
+
+

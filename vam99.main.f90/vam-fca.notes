@@ -1,0 +1,357 @@
+* Emacs: -*- mode:outline -*-
+%  RCS: $Id: vam-fca.notes,v 1.1 2005/03/21 20:26:24 rnh Exp $
+
+* Notes to self 2/18/2005
+
+* Objective
+
+Add fca (alignment only) to vam.
+
+* Approach
+
+** Control vector
+
+Control vector to include du5, dv5 for displacements stored as a wind
+vector.
+This means the physical dimensions and scales are the same as for actual
+winds.
+
+** Fca interpolation
+
+To determine the adjusted background.
+The du5, dv5 are known at the grid locations.
+Then multiply du5, dv5 by a fixed constant (say = 60*60 or one hour)
+to convert to a displacment in meters.
+
+To make things easy:
+For the latitude at which a particular du5, dv5 are defined convert
+to longitude and latitude increments and add to latitude and
+longitude of the departure point, converting to grid units along the
+way.
+NB: Would this would fail at the pole?
+Arrival points falling outside of the data window are reset just
+inside the data window.
+
+** Constraint function, Jc
+
+Smoothness constraints can be applied with large lambda weights, and
+a background of zeros.
+Laplacian should be very strong.
+The dynamic constraint does not make sense for these fields.
+Divergence and vorticity could make sense here.
+
+** Interaction with FGAT
+
+Makes most sense to interpolate through analysis.
+Normal FGAT calculation says the analysis-background at the obs
+location applies at other times.
+Or it can be viewed as correcting for the time change of the
+background.
+But FCA says the background is in the wrong place.
+
+* Coding
+
+** Redfining the grid data structure
+
+Ideally would like to allow du5, dv5 to be on a different grid:
+generally coarser.
+Solution could be to make the grid a derived type.
+But this to hard.
+
+** Add to current data structure
+
+Or add du5, dv5 to the current data structure and use only one data
+structure.
+There will still be effects in many places.
+Need a copy of ssback, called sscons to calculate the smoothness on
+the adjustments.
+cgr will have changes in mapping the grid to the control vector and
+vice versa.
+
+Conceptually we move the background, so the software does this also.
+Then we only need to adjust the background and only for the purpose
+of comparing it with the analysis.
+The analysis and the obs. functions are unchanged.
+Interactions with FGAT are more sensible.
+Validation of a forecast against an analysis is more straightforward:
+the analysis is held fixed only the FCA changes.
+
+The background adjustment can be done using fcainterp version
+with fixed data, only varying positions.
+In the grid data structure this would require defining the adjustment
+winds---du5, dv5 (part of control variable), du, dv---and the adjusted
+winds ua5, va5, ua, va.
+
+Now when we apply Jb to (u5,v5) - (ua5,va5) we get only the
+derivatives (u, v), but Jb is entirely symmetric (HofLH+03) so we can
+repeat the calculation of Jb applied to (ua5,va5) - (u5,v5) to get the
+derivatives (ua, va).
+
+If one of (u5,v5) or (ua5,va5) is fixed we will skip one or the other
+of these calculations.
+
+And we also apply Jb to (du5,dv5) with different lambdas to control
+the adjustments.
+
+** A preliminary version using the current data structure (fca-test)
+
+A preliminary version that calculates only the adjustment could be
+more easily implemented.
+To do this interpret the current data structure so the u5, v5 are the
+adjustment winds; u, v their adjoint; but u0, v0 remains the
+background actual winds field.
+Then ssback needs to allocate a field of zeros to be passed as the
+background for jb.
+fcainterp needs implementation for the case where locations, but not
+data vary.
+fcainterp appears in each individual obs functional.
+
+A task to calculate the adjusted background and store it as u5, v5
+would allow the adjusted background to be writen to a file.
+
+* cvs commands for branch
+
+dap01[103]% cvs tag -b fca-test
+dap01[104]% cvs update -r fca-test
+
+Used to develop fca-test branch.
+
+* Planning for fca trunck implementation.
+
+Early March 2005:
+
+c * Definition of FCA modes
+
+c We define four modes of operation wrt to the FCA technique
+
+c 0. fca_none: fca_mode=0
+c    This is the standard problem with no fca.
+c    The control vector x = (u,v). 
+c    Jb compares (u5,v5) to (u0,v0).
+c    The adjustment winds and the adjusted winds are not present.
+c    Conceptually (du5,dv5)=0, so (ua5,va5)=(u0,v0).
+
+c 1. fca_only: fca_mode=1
+c    An analysis based on fca only.
+c    The control vector x = (du,dv). 
+c    Jb = 0 (or is absent) since the analysis is the adjusted wind.
+c    Jc compares (du,dv) to (0,0).
+c    Conceptually (u5,v5) = (ua5,va5).
+
+c 2. fca_too: fca_mode=2
+c    A combined data analysis including fca and analysis increments.
+c    The control vector x = (u,v,du,dv). 
+c    Jb compares (u5,v5) to (ua5,va5), but (ua5,va5) depend on (du,dv).
+c    Jc compares (du,dv) to (0,0).
+
+c 3. fca_val: fca_mode=3
+c    Use fca for validation: match analysis and background using fca.
+c    The control vector x = (du,dv). 
+c    Jb compares (u5,v5) to (ua5,va5).
+c    Jc compares (du,dv) to (0,0).
+c    In this mode (u5,v5) is fixed and Jo is absent.
+?    vam_main must allow call to solve in this case if there are no data!
+
+c * Setup grids
+
+c In grid_mod
+
+c!#~  du5,dv5  adjustment wind (trajectory)
+c!#~  du,dv    adjustment wind (adjoint)
+c!#~  ua5,va5  adjusted wind (trajectory)
+c!#~  ua,va    adjusted wind (adjoint)
+      REAl, public, save, allocatable, dimension(:,:) :: du5,dv5,
+     &   du,dv,ua5,va5,ua,va
+
+c In vam_grid_mod
+
+c In vam_grid
+
+c fca_mode is set as part of the gridops namelist.  Also add
+c save_adjustment_fname and save_adjusted_fname to namelist gridops.
+
+c fca_mode is used to set cv_uv and cv_fca in grid_mod.
+      cv_uv = fca_mode.EQ.0 .OR. fca_mode.EQ.2
+      cv_fca = fca_mode.EQ.1 .OR. fca_mode.EQ.2 .OR. fca_mode.EQ.3
+
+c fca_mode is used to set ncv the size of the control vector in solve_init.
+      ncv = 2*nactive0
+      If (fca_mode.EQ.2) ncv = 4*nactive0
+
+c After defining (u0,v0) and (u5,v5)
+      IF (cv_fca) THEN
+
+c If (du5,dv5) exists interpolate to the new grid using (u,v).
+c Otherwise allocate (du5,dv5) and set to zero.
+
+c Allocate adjoint variables (du,dv) and set to zero
+
+c Define adjusted winds
+         IF (fca-mode.EQ.1) THEN
+c Define u5,v5 from fcainterp applied to (u0,v0,du5,dv5).
+         ELSE
+c Allocate (ua5,va5) and define using fcainterp applied to (u0,v0,du5,dv5).
+c Allocate adjoint variables (ua,va) and set to zero
+         END IF
+
+      END IF
+
+c At end save (du5,dv5) and/or (ua5,va5) to save_adjustment_fname and/or
+c save_adjusted_fname if these grids exist.
+
+c In reset_grid
+
+c Deallocate all fca grids that were allocated.
+
+c * Define lamda weights
+
+c In solve_mod define analogs to iback, ifore, idev, ivor, ifilt, idvdt
+c and idddt.  Also nsos increments by 6, ctitle, lscale, add
+c slamda(icons)=slamda_cons to sscgr0 argument list.
+
+? Define lamda_obs, lamda_back, lamda_cons, use in namelist, calls to sscgr0.
+? Would introduce some complexity to sscgr1.  Indexing from
+? lamda_back or lamda_cons to lamda used in Jb could be set in
+? ssback_mod.
+
+c * Convert control vector to grids
+
+c Note: filfft removes noise in longitude smaller than the latitude
+c grid spacing.  We always apply this to (u5,v5)-(u0,v0) and (du5,dv5).
+
+c In cgr_mod
+
+      SUBROUTINE cv2g
+
+c Case depends on fca_mode through cv_uv and cv_fca.
+
+      IF (cv_uv) THEN
+c     map, filfft, and extend x(istart) to (u5,v5)
+      istart = istart + 2*nactive
+      END IF
+
+      IF (cv_fca) THEN
+c     map, filfft, and extend x(istart) to (du5,dv5)
+c Define adjusted winds
+         IF (fca-mode.EQ.1) THEN
+c Define u5,v5 from fcainterp applied to (u0,v0,du5,dv5).
+         ELSE
+c Define (ua5,va5) from fcainterp applied to (u0,v0,du5,dv5).
+         END IF
+
+      END IF
+
+c * Convert grids to control vector
+
+c In cgr_mod we need to versions
+
+      SUBROUTINE cv2gad
+
+c Case depends on fca_mode through cv_uv and cv_fca.
+
+c For adjoint fields apply chain.
+
+      istart = istart + 2*nactive
+
+      IF (cv_fca) THEN
+c Adjoint of define adjusted winds
+         IF (fca-mode.EQ.1) THEN
+c Adjoint of define u5,v5 from fcainterp applied to (u0,v0,du5,dv5).
+         ELSE
+c Adjoint of define (ua5,va5) from fcainterp applied to (u0,v0,du5,dv5).
+         END IF
+c     chain, filfft, and imap (du,dv) to x(istart)
+      END IF
+
+      istart = 1
+
+      IF (cv_uv) THEN
+c     chain, filfft, and imap (u,v) to x(istart)
+      END IF
+
+      SUBROUTINE g2cv
+
+c Case depends on fca_mode through cv_uv and cv_fca.
+
+c For full fields do not apply chain
+
+      istart = 1
+
+      IF (cv_uv) THEN
+c     filfft, and imap (u5,v5) to x(istart)
+      END IF
+
+      istart = istart + 2*nactive
+
+      IF (cv_fca) THEN
+c     filfft, and imap (du5,dv5) to x(istart)
+      END IF
+
+c * Calculate Jb
+
+c In sscgr0 in cgr_mod
+
+c Inialize accumulators.
+      ss=0
+      norm_obs(:)=0
+      IF (cv_uv) THEN
+         u(:,:)=0; v(:,:)=0
+      END IF
+      IF (cv_fca) THEN
+         du(:,:)=0; dv(:,:)=0
+         IF (.NOT.fca_mode.EQ.1) THEN
+             ua(:,:)=0; va(:,:)=0
+         END IF
+      END IF
+
+c In ssback in ssback_mod
+
+c For each case perform appropriate action to increment Jbval, and (u,v)
+c and/or (ua,va).
+
+c 0. fca_none: fca_mode=0
+c    Jb compares (u5,v5) to (u0,v0).
+
+c 1. fca_only: fca_mode=1
+c    No calculation.  Set Jb = 0.
+
+c 2. fca_too: fca_mode=2
+c    Jb compares (u5,v5) to (ua5,va5).
+
+c    But (ua5,va5) depend on (du,dv), so we need to repeat the
+c    calculation with the roles of (ua5,va5) and (u5,v5) reversed.  We
+c    just want the contributions to (ua,va), so we replace Jbval with a
+c    local version that is not further used.
+
+c 3. fca_val: fca_mode=3
+c    Jb compares (ua5,va5) to (u5,v5).
+c    Since (u5,v5) is fixed and not in the control vector, we only
+c    calculate the contributions to (ua,va) here.
+
+c * Calculate Jc
+
+c In sscgr0 in cgr_mod
+
+c Calculate sum of squares for adjustment constraint also
+      IF (cv_fca) CALL sscons (ss, slamda_cons)
+
+c Define sscons from fca-test version of ssback.
+c Add to ssback_mod so it has access to integration domain parameters.
+
+c * Initialize adjustment winds
+
+c Since a zero initial estimate is associated with maximum
+c non-differentiability for the dependence of the adjusted wind on the
+c adjustment wind the minimization software may decide something is
+c wrong.  To fix this add a task to vam_main to initialize the fca
+c calculation.  This would set up any needed parameters as well.  We
+c could initialize (du,dv) randomly or set (du,dv) to small constants.
+c An alternative is to calculate the steepest descent direction for the
+c problem and take a step along that direction.  The step length might
+c be chosen so that the maximum displacement is equal to 1 latitude grid
+c unit.
+
+
+
+
+

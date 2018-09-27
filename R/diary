@@ -1,0 +1,142 @@
+>(fset 'f10
+   [?\C-a ?\C-f ?\C-f ?\C-  ?\C-e ?\M-w ?\C-f ?\C-x ?o ?\M-> ?\C-y ?\C-x ?q return ?\C-x ?o])
+
+M-x R 
+Note: C-c C-v is for help or help.search('topic')
+
+> Sys.putenv("DISPLAY"=":0") # deprecated
+> Sys.setenv("DISPLAY"=":0") ; x11()
+> sanity<-par() ; date() ; options(width=120)
+> par(sanity)
+
+> ###################### FGAT Error simple plots ######################
+
+> source('routines.q')
+> source('plot.colors.q')
+
+> # postscript(paper='letter',horizontal=F,onefile=F)
+> source('front-xy.q')
+> source('front-tz.q')
+> source('archtypes.q')
+> # dev.off()
+
+> plot(1:25,1:25,col=1:25,pch=1:25,cex=2.5)
+> abline(h=c(5,10,15,20),v=c(5,10,15,20))
+
+> ######################### FGAT WRF data #############################
+
+> source('meranti.wrf.data.q')
+> source('plot.parab.q')
+
+> # paste together v3 and v4
+> Meranti2004080800.v34<-Meranti2004080800.v4
+> Meranti2004080800.v34[1:4,]<-Meranti2004080800.v3[1:4,]
+
+> postscript('fgat-wrf.ps',paper='letter',horizontal=F,onefile=T,title='fgat plot')
+> par(mfrow=c(3,2))
+> plot.parab.uvw(Meranti2004080800,ymax=0.7)
+> title('Meranti 08 Aug 2004',line=1,cex.main=2)
+> plot.parab.uvw(Meranti2004080900,ymax=0.7)
+> title('Meranti 09 Aug 2004',line=1,cex.main=2)
+> plot.parab.uvw(SIndian2004110100)
+> title('S. Indian Ocean 01 Nov 2004',line=1,cex.main=2)
+> plot.parab.uvw(SIndian2004110200)
+> title('S. Indian Ocean 02 Nov 2004',line=1,cex.main=2)
+> plot.parab.uvw(TropPac2005030700,ymax=0.7)
+> title('Tropical Pacific 07 Mar 2005',line=1,cex.main=2)
+> plot.parab.uvw(TropPac2005030800,ymax=0.7)
+> title('Tropical Pacific 08 Mar 2005',line=1,cex.main=2)
+> dev.off(dev.cur())
+
+> postscript('fgat-persist.ps',paper='letter',horizontal=F,onefile=T,title='fgat plot')
+> par(mfrow=c(3,2))
+> plot.parab.uvw(Meranti2004080800.v34,linear=T,col=c(5,6,8))
+> plot.parab.uvw(Meranti2004080800.v2,add=T)
+> plot.parab.uvw(Meranti2004080800.v34,linear=T,col=c(5,6,8),add=T)
+> text(0.25,1.12,'a',cex=3)
+> plot.parab.uvw(Meranti2004080800.v2,ymax=0.75)
+> plot.parab.uvw(Meranti2004080800.v2.2hour,ptmax=6,add=T)
+> plot.parab.uvw(Meranti2004080800.v2.4hour,ptmax=6,add=T)
+> text(0.25,0.69,'b',cex=3)
+> dev.off(dev.cur())
+
+> ######################### Table for 2,4,6 h  #############################
+
+> # Meranti maxima
+> mm<-rbind(apply(Meranti2004080800.v2,2,max),apply(Meranti2004080800.v2.4hour,2,max),apply(Meranti2004080800.v2.2hour,2,max))
+> mm
+     hr        u      v   wspd
+[1,]  6 0.740999 0.7454 0.7425
+[2,]  4 0.532276 0.5879 0.5442
+[3,]  2 0.263309 0.3074 0.2740
+> mm1<-mm
+> for (i in 1:3) mm1[i,]<-mm1[i,]/mm[1,]
+> round(100*mm1)
+      hr   u   v wspd
+[1,] 100 100 100  100
+[2,]  67  72  79   73
+[3,]  33  36  41   37
+
+> ######################### Scaling table  #############################
+
+> D3h<-rbind(apply(Meranti2004080800,2,max),apply(SIndian2004110100,2,max),apply(TropPac2005030700,2,max),apply(Meranti2004080800.v2,2,max))[,-1]
+> dimnames(D3h)<-dimnames(D12)
+> Dpct<-round(D3h/D12,digits=2)
+> Dpct
+                u    v    W
+Meranti      0.42 0.42 0.45
+South Indian 0.48 0.47 0.58
+T. Pacific   0.44 0.41 0.50
+Frozen       0.34 0.40 0.42
+> median(Dpct[-4,])
+[1] 0.45
+ 
+> ######################## 13 Feb 2012 #########################
+
+> vmag<-function(v){sqrt(sum(v^2))}
+> dot<-function(x,y){sum(x*y)}
+> # two-element vector only for following
+> vnormal<-function(v){c(-v[2],v[1])}
+> project<-function(v,x=c(1,0),n=vnormal(x)){c(dot(v,x),dot(v,n))}
+> vplot<-function(v,start=c(0,0),...){arrows(start[1],start[2],start[1]+v[1],start[2]+v[2],...)}
+
+> path=c(-3,1)
+> wind=c(100,-100)
+> airspeed<-500*0.5144444444 # knots to meters per second
+> path=path/vmag(path)
+> n.path<-vnormal(path)
+> pathwind<-project(wind,path)
+> pathair<-c(sqrt(airspeed^2-pathwind[2]^2),-pathwind[2])
+
+> psize=250
+> offset<-c(-100,-100)
+> plot(c(-psize,psize),c(-psize,psize),type='n',xlab='u (m/s)',ylab='v(m/s)')
+> abline(col="grey",a=0,b=path[2]/path[1])
+> vplot(psize*path/3,offset)
+> vplot(psize*n.path/3,offset)
+> vplot(wind,col=2)
+> vplot(pathwind[1]*path,col=4)
+> vplot(pathwind[2]*n.path,pathwind[1]*path,col=4)
+> vplot(pathair[1]*path,col=4)
+> vplot(pathair[2]*n.path,pathair[1]*path,col=4)
+> vplot(pathair[2]*n.path+pathair[1]*path,col=3)
+> vplot((pathair[1]+pathwind[1])*path,col=1)
+
+> pdf('flight.path.pdf',width=8,height=8,onefile=T,title='Aircraft heading')
+> dev.off()
+
+> ######################### 1/Mar/2012 #############################
+
+Plot of simple figure for Steve.
+
+> pdf('time-axis.pdf',width=8,height=10,onefile=T,title='time axis plot')
+> deltat=0.25
+> plot(c(0,10),c(0,10),type='n',ylab='',xlab='',axes=F)
+> polygon(c(1,1,3,4,6,7,9,9,1),5+deltat*c(0,1,1,2,2,3,3,0,0),border=NA,col='grey')
+> lines(c(1,3,4,6,7,9),5+deltat*c(1,1,2,2,3,3))
+> text(c(2,5,8),5+deltat*(c(1,2,3)+0.5),c('n-1','n','n+1'))
+> arrows(9+deltat,5,9+deltat,5+3*deltat,lwd=2,length=deltat/2)
+> text(9+2*deltat,5+deltat,'t',cex=2)
+> dev.off()
+
+> #########################  #############################

@@ -1,0 +1,60 @@
+#################################################################
+# WARNING: !!!!!!!!!!!!!!!!!!!
+##################################################################
+
+This shell is compiled using the version 4.0 release 2 of HDF,
+and its given libraries.
+
+The software has been tested on SGI and SUN Solaris.  If you are 
+using any other operating system, please use at your own risk.
+
+##################################################################
+# NOTE: !!!!!!!!!!!!!!!!!!!!!
+##################################################################
+
+This directory contains the files and calls necessary to build the 
+NSCAT shell library. This library needs to be build before you
+can compile and run any of the readers
+
+Please check the ftp site for update software and makefile versions.
+
+To Come:
+	 Makefile for HP
+         Makefile for OS
+    
+         Straight HDF readers (without need to use the nscatshell.a 
+	 library both in C and FORTRAN.
+
+##################################################################
+# READ: !!!!!!!!!!!!!!!!!!!!
+##################################################################
+
+1.	You must have a version 4.0 release 2 of HDF installed in
+	a know directory in order to be able to run this programs
+
+	You need to be able to run ansi C
+
+2.	This directory contains the following:
+
+		file		README
+		file		Makefile.###
+		file		fnscat.c
+		file		hdfshell.c
+		file		hdfshell.h
+		file		nscatff.f
+		file		testc.c
+		file		testc1.c
+		file		testf.f
+		directory	lib	
+			(this directory contains the library nscatshell.a)
+
+3.	Do not edit this Makefile.  This Makefile is design to
+	work together with the makefile Makefile.### (where
+	### is sgi or solaris) in the main directory.  If you will like
+	to compile this directory alone, you will have to
+	write your own makefiles to do so.
+
+4.	This directory will be compiled automatically when you
+	compile the main directory.  The nscatshell.a library
+	will be created during compile.
+		

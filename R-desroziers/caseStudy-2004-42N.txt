@@ -1,0 +1,702 @@
+> source('/Users/rhoffman/vam/R/plot.gamma.q')
+> source('/Users/rhoffman/vam/R/source.q')
+> line.col=c('cyan','red','blue')
+> platforms<-list(amsre="AMSRE",f13="F13",f14="F14",f15="F15",qscat="QSCAT",tmi='TMI')
+
+! Old VC-QC
+> VC.sd<-list(a=0.75,o=1.5,b=2.25)
+> VC.means<-list(a=0.1,o=0.4,b=1.4)
+> nsdVC<-6
+
+! New VC-QC based on iterated stats for 42.375 N with no QC
+> VC.sd<-list(b=2.0,o=0.9,a=0.66)
+> VC.means<-list(b=1.3,o=0.40,a=0.075)
+> nsdVC<-6
+
+> qc<-function(select=T,lat=lat.name){unlist(list(Lat=as.real(lat),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))}
+
+> ######################### line plot for gamma #############################
+> pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+> par(mfrow=c(2,2),mar=c(2,2,2,2)+0.1,pty='s') # Use c(5,5,2,2) to see axis labels
+> gammaCriticalRange<-1.07+0.24*c(-1,1)
+> gamma<-seq(-1,2,0.01)
+> plot(c(-0.5,1.5),c(-0.5,1.5),type='n',xlab='',ylab='')
+> xp<-gammaCriticalRange
+> yp<-par('usr')[3:4]
+> polygon(c(xp[1],xp[2],xp[2],xp[1],xp[1]),c(yp[1],yp[1],yp[2],yp[2],yp[1]),border=NA,col=8)
+> abline(h=0,v=c(0,1),lty=2)
+> abline(0,1,col=line.col[1],lwd=2)
+> abline(-1,1,col=line.col[3],lwd=2)
+> lines(gamma,gamma*(gamma-1),col=line.col[2],lwd=2)
+> legend('topleft',c('B','O','A'),col=line.col,lty=1,lwd=2,bg='white')
+> title(xlab=expression(gamma),ylab=expression(C[x]/(A-B)^2))
+> dev.off(dev.cur())
+
+> ######################### time axis plot for Steve G  #############################
+> pdf('time-axis.pdf',width=8,height=10,onefile=T,title='time axis plot')
+> deltat=0.25
+> plot(c(0,10),c(0,10),type='n',ylab='',xlab='',axes=F)
+> polygon(c(1,1,3,4,6,7,9,9,1),5+deltat*c(0,1,1,2,2,3,3,0,0),border=NA,col='grey')
+> lines(c(1,3,4,6,7,9),5+deltat*c(1,1,2,2,3,3))
+> text(c(2,5,8),5+deltat*(c(1,2,3)+0.5),c('n-1','n','n+1'))
+> arrows(9+deltat,5,9+deltat,5+3*deltat,lwd=2,length=deltat/2)
+> text(9+2*deltat,5+deltat,'t',cex=2)
+> dev.off()
+
+> ######################### 42.375N case study #############################
+> I will attempt to capture everything important for this case study.
+> Then wipe out the .RData (move it out of the way) and see if I can
+> recreate everything.
+
+> lat.name<-'42.375'
+> lat.nameNS<-paste(abs(as.real(lat.name)),ifelse(as.real(lat.name)<0,'S','N'))
+> all.data <- readInputDataByLat(lat.name)
+In directory /Users/rhoffman/Desktop/P1736-NASA-OceanWInds/CCMP/gammaInputDataByLat/ 
+File amsre.speed.2004.42.375.txt: Read 1554280 items
+File f13.speed.2004.42.375.txt: Read 2017856 items
+File f14.speed.2004.42.375.txt: Read 1895576 items
+File f15.speed.2004.42.375.txt: Read 1944544 items
+File qscat.speed.2004.42.375.txt: Read 2365776 items
+File tmi.speed.2004.42.375.txt: Does not exist
+
+> dimnames(all.data)[[2]]
+ [1] "platform" "datetime" "time"     "dt"       "lat"      "lon"      "a"        "b"        "o"        "gamma"   
+[11] "nobs"     "dtbar"    "gammabar" "avc"     
+
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[,i])
+> select<-rep(T,dim(all.data)[1])
+> select.data<-select
+
+> Ca<-(a-b)*(o-a)
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> select.a<-abs(Ca-VC.means$a)<nsdVC*VC.sd$a
+> select.b<-abs(Cb-VC.means$b)<nsdVC*VC.sd$b
+> select.o<-abs(Co-VC.means$o)<nsdVC*VC.sd$o
+> select<-select.a & select.b & select.o
+> select.data<-select
+
+> t(apply(cbind(select.b,select.o,select.a,select),2,qc))
+OldQC       Lat   Total Selected QCedPercent
+select.b 42.375 1222254  1201329        1.71
+select.o 42.375 1222254  1208832        1.10
+select.a 42.375 1222254  1201469        1.70
+select   42.375 1222254  1190822        2.57
+
+> t(apply(cbind(select.b,select.o,select.a,select),2,qc))
+VCQC        Lat   Total Selected QCedPercent
+select.b 42.375 1222254  1197210        2.05
+select.o 42.375 1222254  1196313        2.12
+select.a 42.375 1222254  1197556        2.02
+select   42.375 1222254  1179420        3.50
+
+> ######################### Statistics table #############################
+> select<-select.data
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> Ca<-(a-b)*(o-a)
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> gamma<-(o-b)/(a-b)
+> delta<-(a-b)/(o-b)  #  was 1/gamma !
+> qnorm(3/4) # 75%ile is approx. 2/3 of a standard deviation above the mean for a normal distribution
+[1] 0.6744898
+> 1/diff(qnorm(c(1,3)/4)) # approximately 3/4 of the interquartile range is an approximation for the standard deviation
+[1] 0.7413011
+> boxplot.stats(gamma,do.conf=F,do.out=F)$stats # whisker, 1st quartile, median, 3rd quartile, whisker
+[1] -0.8070588  0.6090909  1.0809894  1.5531915  2.9693396
+> diff(boxplot.stats(gamma,do.conf=F,do.out=F)$stats[c(2,4)])/diff(qnorm(c(1,3)/4)) # standard deviation approximately
+[1] 0.6998628
+> gammaBar<-boxplot.stats(gamma,do.conf=F,do.out=F)$stats[3] # whisker, 1st quartile, median, 3rd quartile, whisker
+> gammaSD<-diff(boxplot.stats(gamma,do.conf=F,do.out=F)$stats[c(2,4)])/diff(qnorm(c(1,3)/4)) # approximate standard deviation
+> gammaSlopes<-unlist(list(B=gammaBar,O=(gammaBar-1)*gammaBar+gammaSD^2,A=gammaBar-1))
+> gammaSlopes
+No QC     B         O         A 
+1.0809894 0.5773566 0.0809894 
+VC QC    B          O          A 
+1.07142857 0.56289989 0.07142857 
+> deltaBar<-boxplot.stats(delta,do.conf=F,do.out=F)$stats[3] # whisker, 1st quartile, median, 3rd quartile, whisker
+> deltaSD<-diff(boxplot.stats(delta,do.conf=F,do.out=F)$stats[c(2,4)])/diff(qnorm(c(1,3)/4)) # approximate standard deviation
+> deltaSlopes<-unlist(list(B=deltaBar,O=1-deltaBar,A=deltaBar*(1-deltaBar)-deltaSD^2))
+> deltaSlopes
+No QC     B           O           A 
+ 0.77975323  0.22024677 -0.07937373 
+VC QC     B           O           A 
+ 0.78242075  0.21757925 -0.08795948 
+
+> x <- cbind(b,o,a,omb=o-b,oma=o-a,amb=a-b,Cb,Co,Ca)
+> select<-rep(T,length(b))
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.all<-gs
+> select<-platform==1
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.amsre<-gs
+> select<-platform==2
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.f13<-gs
+> select<-platform==3
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.f14<-gs
+> select<-platform==4
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.f15<-gs
+> select<-platform==5
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.qscat<-gs
+> select<-platform>1 & platform<5
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.ssmi<-gs
+> select<-nobs==1
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.nobs1<-gs
+> select<-nobs==2
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.nobs2<-gs
+> select<-nobs==3
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.nobs3<-gs
+> select<-nobs==4
+> qc(select); gs<-gamma.stats(x[select,]); gamma.stats.print(gs,Cx=F)
+> gs.nobs4<-gs
+
+> gs.n<-unlist(list(all=gs.all$n,qscat=gs.qscat$n,amsre=gs.amsre$n,ssmi=gs.ssmi$n,f13=gs.f13$n,f14=gs.f14$n,f15=gs.f15$n,nobs1=gs.nobs1$n,nobs2=gs.nobs2$n,nobs3=gs.nobs3$n,nobs4=gs.nobs4$n))
+> gs.mean<-rbind(all=gs.all$mean,qscat=gs.qscat$mean,amsre=gs.amsre$mean,ssmi=gs.ssmi$mean,f13=gs.f13$mean,f14=gs.f14$mean,f15=gs.f15$mean,nobs1=gs.nobs1$mean,nobs2=gs.nobs2$mean,nobs3=gs.nobs3$mean,nobs4=gs.nobs4$mean)
+> gs.sqrtMean<-sqrt(pmax(gs.mean[,7:15],0))
+> gs.stdev<-rbind(all=gs.all$stdev,qscat=gs.qscat$stdev,amsre=gs.amsre$stdev,ssmi=gs.ssmi$stdev,f13=gs.f13$stdev,f14=gs.f14$stdev,f15=gs.f15$stdev,nobs1=gs.nobs1$stdev,nobs2=gs.nobs2$stdev,nobs3=gs.nobs3$stdev,nobs4=gs.nobs4$stdev)
+> # Effective N
+> gs.accuracy<-1/gs.mean[,7:9]
+> gs.nobs<-(gs.accuracy[,3]-gs.accuracy[,1])/gs.accuracy[,2]
+
+> round(100*gs.n/gs.n[1],digits=2)
+> gamma.stats.rounder(gs.mean)
+> gamma.stats.rounder(sqrt(pmax(gs.mean[,7:15],0)))
+> gamma.stats.rounder(gs.stdev[,1:12])
+> round(gs.nobs,digits=1)
+
+# Results w no QC:
+>  round(100*gs.n/gs.n[1],digits=2)
+   all  qscat  amsre   ssmi    f13    f14    f15  nobs1  nobs2  nobs3  nobs4 
+100.00  24.19  15.90  59.91  20.64  19.39  19.89  23.27  33.13  31.71  11.89 
+> gamma.stats.rounder(gs.mean)
+        b   o   a  omb  oma  amb   Cb   Co    Ca   Bb   Bo    Ba   Mb   Mo    Ma
+all   7.7 8.2 8.1 0.47 0.06 0.41 1.94 0.69 0.171 1.75 0.66 0.146 0.19 0.03 0.024
+qscat 8.1 8.7 8.6 0.61 0.14 0.47 2.30 0.93 0.309 2.02 0.85 0.244 0.28 0.09 0.066
+amsre 7.4 7.7 7.7 0.30 0.02 0.28 1.56 0.54 0.068 1.48 0.53 0.062 0.09 0.01 0.006
+ssmi  7.7 8.1 8.1 0.46 0.04 0.42 1.89 0.64 0.142 1.70 0.62 0.127 0.19 0.02 0.015
+f13   7.7 8.2 8.1 0.53 0.09 0.45 1.93 0.69 0.158 1.69 0.64 0.119 0.24 0.05 0.038
+f14   7.6 8.1 8.0 0.44 0.02 0.42 1.88 0.63 0.146 1.70 0.62 0.139 0.18 0.01 0.007
+f15   7.7 8.1 8.1 0.40 0.00 0.39 1.86 0.59 0.121 1.70 0.59 0.120 0.16 0.00 0.001
+nobs1 7.9 8.4 8.3 0.55 0.10 0.45 2.59 0.85 0.382 2.34 0.80 0.337 0.25 0.06 0.045
+nobs2 7.7 8.2 8.2 0.53 0.06 0.47 2.00 0.72 0.156 1.76 0.69 0.128 0.24 0.03 0.028
+nobs3 7.7 8.1 8.1 0.42 0.04 0.38 1.64 0.61 0.080 1.48 0.59 0.065 0.16 0.02 0.015
+nobs4 7.4 7.7 7.7 0.28 0.03 0.26 1.31 0.52 0.039 1.23 0.51 0.033 0.07 0.01 0.007
+> gamma.stats.rounder(sqrt(pmax(gs.mean[,7:15],0)))
+        Cb   Co    Ca   Bb   Bo    Ba   Mb   Mo    Ma
+all   1.39 0.83 0.413 1.32 0.82 0.383 0.44 0.17 0.155
+qscat 1.52 0.96 0.556 1.42 0.92 0.494 0.53 0.29 0.256
+amsre 1.25 0.73 0.262 1.22 0.73 0.249 0.29 0.08 0.079
+ssmi  1.38 0.80 0.376 1.30 0.79 0.356 0.44 0.13 0.123
+f13   1.39 0.83 0.397 1.30 0.80 0.345 0.49 0.21 0.196
+f14   1.37 0.79 0.382 1.30 0.79 0.373 0.43 0.09 0.083
+f15   1.36 0.77 0.347 1.30 0.77 0.346 0.40 0.03 0.030
+nobs1 1.61 0.92 0.618 1.53 0.89 0.580 0.50 0.23 0.212
+nobs2 1.41 0.85 0.395 1.33 0.83 0.358 0.49 0.18 0.168
+nobs3 1.28 0.78 0.283 1.22 0.77 0.255 0.40 0.13 0.123
+nobs4 1.14 0.72 0.198 1.11 0.72 0.180 0.27 0.08 0.081
+> gamma.stats.rounder(gs.stdev[,1:12])
+        b   o   a  omb  oma  amb    Cb   Co    Ca    Bb   Bo    Ba
+all   3.7 4.1 4.0 1.55 0.72 1.27  6.70 4.04 2.441  6.16 3.84 2.291
+qscat 3.8 4.5 4.3 1.69 0.78 1.33 10.93 6.67 3.561 10.00 6.27 3.292
+amsre 3.6 3.8 3.8 1.42 0.68 1.19  3.94 2.51 2.247  3.73 2.42 2.164
+ssmi  3.6 4.0 4.0 1.52 0.70 1.25  4.74 2.75 1.864  4.25 2.58 1.727
+f13   3.6 4.0 4.0 1.53 0.72 1.25  4.95 2.79 1.912  4.38 2.57 1.762
+f14   3.6 4.0 3.9 1.52 0.70 1.25  4.70 2.76 1.930  4.22 2.61 1.790
+f15   3.6 4.0 4.0 1.51 0.69 1.26  4.54 2.69 1.744  4.12 2.57 1.626
+nobs1 3.7 4.2 4.1 1.77 0.68 1.41  9.91 4.73 2.772  9.12 4.44 2.577
+nobs2 3.7 4.1 4.0 1.56 0.75 1.28  6.26 4.22 2.639  5.63 4.01 2.467
+nobs3 3.7 4.1 4.0 1.44 0.72 1.19  4.79 3.59 2.186  4.36 3.43 2.052
+nobs4 3.6 4.0 3.9 1.32 0.69 1.09  3.69 3.02 1.670  3.49 2.92 1.593
+> round(gs.nobs,digits=1)
+  all qscat amsre  ssmi   f13   f14   f15 nobs1 nobs2 nobs3 nobs4 
+  3.7   2.6   7.5   4.2   4.0   4.0   4.6   1.9   4.3   7.2  12.9 
+> gs.noQC<-list(n=gs.n,mean=gs.mean,stdev=gs.stdev) # for safe keeping
+
+> # results with old VCQC
+> round(100*gs.n/gs.n[1],digits=2)
+   all  qscat  amsre   ssmi    f13    f14    f15  nobs1  nobs2  nobs3  nobs4 
+100.00  24.08  15.99  59.92  20.62  19.41  19.90  23.07  33.05  31.86  12.02 
+> gamma.stats.rounder(gs.mean)
+        b   o   a  omb   oma  amb   Cb   Co    Ca   Bb   Bo    Ba   Mb   Mo     Ma
+all   7.6 8.0 7.9 0.36  0.03 0.32 1.33 0.43 0.085 1.21 0.42 0.074 0.12 0.01  0.011
+qscat 7.9 8.4 8.3 0.43  0.09 0.35 1.21 0.39 0.036 1.06 0.35 0.005 0.15 0.04  0.030
+amsre 7.4 7.6 7.6 0.25  0.02 0.23 1.24 0.41 0.081 1.18 0.40 0.077 0.06 0.00  0.004
+ssmi  7.6 7.9 7.9 0.36  0.02 0.34 1.40 0.46 0.106 1.28 0.45 0.099 0.12 0.01  0.006
+f13   7.6 8.0 7.9 0.43  0.07 0.36 1.41 0.51 0.132 1.26 0.48 0.106 0.15 0.03  0.025
+f14   7.5 7.9 7.9 0.34  0.00 0.34 1.40 0.45 0.106 1.28 0.45 0.107 0.12 0.00 -0.001
+f15   7.6 7.9 7.9 0.30 -0.02 0.32 1.39 0.42 0.078 1.29 0.42 0.083 0.09 0.00 -0.005
+nobs1 7.8 8.2 8.1 0.38  0.05 0.33 1.56 0.44 0.171 1.44 0.42 0.154 0.13 0.02  0.017
+nobs2 7.6 8.0 8.0 0.41  0.04 0.37 1.37 0.46 0.083 1.22 0.45 0.069 0.15 0.02  0.014
+nobs3 7.6 7.9 7.9 0.33  0.03 0.31 1.21 0.42 0.048 1.10 0.41 0.040 0.10 0.01  0.008
+nobs4 7.4 7.6 7.6 0.23  0.01 0.22 1.06 0.38 0.022 1.01 0.38 0.019 0.05 0.00  0.003
+> gamma.stats.rounder(sqrt(pmax(gs.mean[,7:15],0)))
+        Cb   Co    Ca   Bb   Bo    Ba   Mb   Mo    Ma
+all   1.15 0.66 0.291 1.10 0.65 0.271 0.34 0.11 0.106
+qscat 1.10 0.62 0.189 1.03 0.59 0.074 0.39 0.19 0.174
+amsre 1.11 0.64 0.285 1.09 0.63 0.278 0.24 0.07 0.063
+ssmi  1.18 0.68 0.325 1.13 0.67 0.315 0.35 0.08 0.079
+f13   1.19 0.71 0.363 1.12 0.69 0.326 0.39 0.17 0.159
+f14   1.18 0.67 0.326 1.13 0.67 0.327 0.34 0.00 0.000
+f15   1.18 0.65 0.280 1.14 0.65 0.289 0.31 0.00 0.000
+nobs1 1.25 0.66 0.413 1.20 0.65 0.392 0.36 0.14 0.130
+nobs2 1.17 0.68 0.288 1.11 0.67 0.263 0.39 0.12 0.119
+nobs3 1.10 0.65 0.220 1.05 0.64 0.200 0.32 0.09 0.091
+nobs4 1.03 0.62 0.150 1.01 0.62 0.138 0.23 0.06 0.057
+> gamma.stats.rounder(gs.stdev[,1:12])
+        b   o   a  omb  oma  amb   Cb   Co    Ca   Bb   Bo    Ba
+all   3.6 3.8 3.7 1.28 0.59 1.07 2.10 1.03 0.713 2.00 0.97 0.668
+qscat 3.6 3.9 3.9 1.19 0.59 1.03 1.97 0.99 0.696 1.82 0.91 0.651
+amsre 3.5 3.5 3.5 1.26 0.57 1.05 2.00 0.97 0.670 1.98 0.94 0.642
+ssmi  3.5 3.8 3.7 1.32 0.60 1.09 2.18 1.06 0.729 2.07 1.00 0.677
+f13   3.5 3.7 3.7 1.32 0.61 1.07 2.17 1.11 0.744 2.04 1.02 0.684
+f14   3.5 3.8 3.7 1.32 0.58 1.08 2.18 1.04 0.719 2.07 1.00 0.665
+f15   3.6 3.8 3.7 1.31 0.58 1.10 2.19 1.02 0.722 2.09 0.98 0.680
+nobs1 3.6 3.8 3.7 1.36 0.51 1.13 2.34 1.03 0.681 2.22 0.96 0.634
+nobs2 3.6 3.8 3.7 1.29 0.61 1.07 2.15 1.08 0.749 2.02 1.02 0.694
+nobs3 3.5 3.8 3.7 1.23 0.61 1.03 1.97 1.01 0.712 1.88 0.96 0.670
+nobs4 3.5 3.7 3.7 1.18 0.60 1.00 1.76 0.93 0.654 1.74 0.90 0.629
+> round(gs.nobs,digits=1)
+  all qscat amsre  ssmi   f13   f14   f15 nobs1 nobs2 nobs3 nobs4 
+  4.8  10.6   4.7   4.0   3.5   3.9   5.1   2.3   5.2   8.4  16.7 
+> gs.oldQC<-list(n=gs.n,mean=gs.mean,stdev=gs.stdev) # for safe keeping
+
+> # results with new VCQC
+> round(100*gs.n/gs.n[1],digits=2)
+   all  qscat  amsre   ssmi    f13    f14    f15  nobs1  nobs2  nobs3  nobs4 
+100.00  24.11  16.01  59.88  20.59  19.40  19.90  23.03  33.00  31.90  12.06 
+> gamma.stats.rounder(gs.mean)
+        b   o   a  omb   oma  amb   Cb   Co    Ca   Bb   Bo     Ba   Mb    Mo     Ma
+all   7.6 7.9 7.9 0.34  0.03 0.31 1.27 0.39 0.069 1.16 0.38  0.060 0.11  0.01  0.008
+qscat 7.9 8.3 8.2 0.41  0.08 0.34 1.16 0.35 0.022 1.02 0.31 -0.005 0.14  0.03  0.027
+amsre 7.3 7.6 7.6 0.23  0.01 0.22 1.19 0.36 0.068 1.13 0.36  0.065 0.05  0.00  0.003
+ssmi  7.6 7.9 7.9 0.34  0.01 0.33 1.33 0.41 0.088 1.22 0.41  0.085 0.11  0.00  0.003
+f13   7.6 8.0 7.9 0.41  0.06 0.35 1.34 0.46 0.112 1.20 0.43  0.091 0.14  0.02  0.021
+f14   7.5 7.8 7.9 0.32 -0.01 0.33 1.33 0.40 0.087 1.23 0.40  0.090 0.10  0.00 -0.003
+f15   7.6 7.9 7.9 0.28 -0.02 0.31 1.33 0.38 0.064 1.24 0.38  0.071 0.09 -0.01 -0.007
+nobs1 7.8 8.1 8.1 0.36  0.04 0.32 1.48 0.39 0.148 1.37 0.37  0.135 0.11  0.01  0.013
+nobs2 7.6 8.0 8.0 0.39  0.03 0.36 1.31 0.41 0.065 1.17 0.40  0.055 0.14  0.01  0.011
+nobs3 7.6 7.9 7.9 0.32  0.02 0.30 1.16 0.38 0.036 1.06 0.38  0.030 0.09  0.01  0.006
+nobs4 7.3 7.6 7.5 0.22  0.01 0.21 1.03 0.35 0.015 0.98 0.35  0.013 0.05  0.00  0.002
+> gamma.stats.rounder(sqrt(pmax(gs.mean[,7:15],0)))
+        Cb   Co    Ca   Bb   Bo    Ba   Mb   Mo    Ma
+all   1.13 0.62 0.262 1.08 0.62 0.246 0.33 0.10 0.091
+qscat 1.08 0.59 0.148 1.01 0.56 0.000 0.37 0.18 0.163
+amsre 1.09 0.60 0.260 1.06 0.60 0.255 0.23 0.05 0.051
+ssmi  1.15 0.64 0.296 1.11 0.64 0.291 0.33 0.06 0.056
+f13   1.16 0.68 0.335 1.10 0.66 0.302 0.38 0.16 0.145
+f14   1.15 0.63 0.295 1.11 0.64 0.300 0.32 0.00 0.000
+f15   1.15 0.61 0.253 1.11 0.62 0.267 0.29 0.00 0.000
+nobs1 1.22 0.62 0.384 1.17 0.61 0.367 0.34 0.12 0.114
+nobs2 1.14 0.64 0.255 1.08 0.63 0.234 0.37 0.11 0.103
+nobs3 1.08 0.62 0.190 1.03 0.61 0.173 0.31 0.08 0.077
+nobs4 1.01 0.59 0.121 0.99 0.59 0.112 0.22 0.05 0.046
+> gamma.stats.rounder(gs.stdev[,1:12])
+        b   o   a  omb  oma  amb   Cb   Co    Ca   Bb   Bo    Ba
+all   3.5 3.7 3.7 1.24 0.57 1.05 1.96 0.87 0.651 1.88 0.83 0.616
+qscat 3.6 3.9 3.9 1.16 0.57 1.01 1.84 0.84 0.642 1.72 0.78 0.607
+amsre 3.5 3.5 3.5 1.22 0.55 1.03 1.87 0.81 0.610 1.86 0.79 0.587
+ssmi  3.5 3.7 3.7 1.28 0.57 1.07 2.03 0.90 0.665 1.94 0.86 0.623
+f13   3.5 3.7 3.7 1.28 0.59 1.05 2.02 0.93 0.677 1.92 0.88 0.630
+f14   3.5 3.7 3.7 1.28 0.56 1.07 2.03 0.88 0.654 1.94 0.85 0.610
+f15   3.5 3.8 3.7 1.27 0.56 1.08 2.04 0.86 0.661 1.97 0.84 0.626
+nobs1 3.6 3.8 3.7 1.32 0.49 1.11 2.16 0.85 0.610 2.07 0.80 0.575
+nobs2 3.5 3.7 3.7 1.25 0.59 1.06 2.00 0.91 0.681 1.90 0.87 0.637
+nobs3 3.5 3.7 3.7 1.20 0.59 1.02 1.85 0.87 0.658 1.79 0.83 0.624
+nobs4 3.5 3.7 3.7 1.15 0.58 0.98 1.68 0.80 0.610 1.66 0.78 0.590
+> round(gs.nobs,digits=1)
+  all qscat amsre  ssmi   f13   f14   f15 nobs1 nobs2 nobs3 nobs4 
+  5.4  15.5   5.1   4.4   3.7   4.3   5.6   2.4   6.0  10.3  23.7 
+
+> ######################### Plots vs. x, increments^2 #############################
+> sdev=T ; nsd=1/3
+> main<-paste('B, O, A error st. dev., ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> basename<-NULL, 'noQC.all','VCQC.all',etc.
+
+> select<-select.data
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.all.pdf")
+
+> sdev=F ; nsd=1/3
+> main<-paste('B, O, A error var., ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> basename<-NULL # would create the sh data sets
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.all.var.pdf")
+
+> select<-select.data & all.data[,'platform']==1
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.amsre.pdf")
+> select<-select.data & all.data[,'platform']>1 & all.data[,'platform']<5
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.ssmi.pdf")
+> select<-select.data & all.data[,'platform']==5
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.qscat.pdf")
+
+> # Very little difference in the shape of the plots for excluding QSCAT or only looking at nobs=1 cases.
+> # Overall levels for Ca a bit higher w/o QSCAT and noticeable higher without nobs>1.
+> select<-select.data & all.data[,'platform']!=5
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.NOqscat.pdf")
+> select<-select.data & all.data[,'nobs']==1
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.nobs1.pdf")
+
+> # exclude obs with O > 15 m/s
+> select<-select.data & all.data[,'o']<15 ; qc(select)
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1135054.000       7.130 
+> main<-paste('A, B, O error standard deviation, ', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev, O < 15',sep='')
+> source('/Users/rhoffman/vam/R/run.plot.superhist.x.q')
+> system("mv gamma.pdf superhist.x.42.375.VCQC.O.lt.15.pdf")
+
+> # Select on gamma also
+> gamma<-(o-b)/(a-b)
+> select.g<-abs(gamma-1)<nsdVC*2
+> select<-select.data & select.a & select.b & select.o & select.g
+> unlist(list(Lat=as.real(lat.name),Total=length(select),Selected=sum(select),QCedPercent=round(100*(1-sum(select)/length(select)),digits=2)))
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1160205.000       5.080 
+
+> # variation of gamma and delta with x = o, b, etc.
+> # no correlations. some differences in std.dev of gamma with high
+> # wind speed. very significant differences in std.dev wrt (A-B).
+> # for large |A-B| the samples are quite small.
+> sdev=F ; nsd=1/3
+> main<-paste('gamma', lat.nameNS, ', 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> basename<-'gamma.VCQC.all'
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[,i])
+> gamma<-(o-b)/(a-b)
+> delta<-(a-b)/(o-b)
+> select.g<-abs(gamma)<100
+> select.d<-abs(delta)<100
+> select<-select.data & select.g & select.d
+> qc(select)
+        Lat       Total    Selected QCedPercent 
+     42.375 1222254.000 1173202.000       4.010 
+> source('/Users/rhoffman/vam/R/run.plot.superhist.gamma.q')
+> system("mv gamma.pdf superhist.x.42.375.gamma.VCQC.all.pdf")
+> select<-rep(T,dim(all.data)[1])
+> source('/Users/rhoffman/vam/R/run.plot.superhist.gamma.q')
+> system("mv gamma.pdf superhist.x.42.375.gamma.noQC.all.pdf")
+> select<-select.g & select.d
+> source('/Users/rhoffman/vam/R/run.plot.superhist.gamma.q')
+> system("mv gamma.pdf superhist.x.42.375.gamma.gdQC.all.pdf")
+
+> # Cx vs Increments^2, do before and after VC.QC [[Define all.data, select, basename]]
+> select<-select.data
+> basename<-'noQC.all','VCQC.all',etc.
+> source('run.plot.superhist.incr2.q')
+> system("mv gamma.pdf superhist.incr2.42.375.noQC.all.pdf")
+
+> ############### Iterative trimming
+> nsdVC<-6
+> VC.sd<-list(b=gs.noQC$stdev['all','Cb'],o=gs.noQC$stdev['all','Co'],a=gs.noQC$stdev['all','Ca'])
+> unlist(VC.sd)
+       b        o        a 
+6.699912 4.036898 2.441001 
+> VC.mean<-list(b=gs.noQC$mean['all','Cb'],o=gs.noQC$mean['all','Co'],a=gs.noQC$mean['all','Ca'])
+> unlist(VC.mean)
+        b         o         a 
+1.9392949 0.6923528 0.1705373 
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[,i])
+> select<-rep(T,dim(all.data)[1])
+> Ca<-(a-b)*(o-a)
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> select.a<-abs(Ca-VC.means$a)<nsdVC*VC.sd$a
+> select.b<-abs(Cb-VC.means$b)<nsdVC*VC.sd$b
+> select.o<-abs(Co-VC.means$o)<nsdVC*VC.sd$o
+> select<-select.a & select.b & select.o
+> t(apply(cbind(select.b,select.o,select.a,select),2,qc))
+            Lat   Total Selected QCedPercent
+select.b 42.375 1222254  1218151        0.34
+select.o 42.375 1222254  1218916        0.27
+select.a 42.375 1222254  1218278        0.33
+select   42.375 1222254  1215602        0.54
+> for (i in dimnames(all.data)[[2]]) assign(i,all.data[select,i])
+> Ca<-(a-b)*(o-a)
+> Cb<-(a-b)*(o-b)
+> Co<-(o-a)*(o-b)
+> x <- cbind(b,o,a,omb=o-b,oma=o-a,amb=a-b,Cb,Co,Ca)
+> gs<-gamma.stats(x); gamma.stats.print(gs,Cx=F)
+
+Sample size is 1215602 for 42.375 N ::
+        b   o   a  omb  oma  amb   Cb   Co    Ca   Bb   Bo    Ba   Mb   Mo    Ma
+mean  7.7 8.1 8.1 0.43 0.05 0.38 1.63 0.54 0.121 1.47 0.52 0.103 0.16 0.02 0.018
+stDev 3.6 3.9 3.9 1.41 0.65 1.17 3.28 1.63 1.103 2.97 1.51 1.009 0.00 0.00 0.000
+
+> VC.sd<-list(b=gs$stdev['Cb'],o=gs$stdev['Co'],a=gs$stdev['Ca'])
+> VC.mean<-list(b=gs$mean['Cb'],o=gs$mean['Co'],a=gs$mean['Ca'])
+> unlist(c(N=sum(select)/length(select),VC.sd,VC.mean))
+
+> unlist(c(VC.sd,VC.mean))
+       b        o        a         b         o         a 
+6.699912 4.036898 2.441001 1.9392949 0.6923528 0.1705373 
+> unlist(c(VC.sd,VC.mean))
+         N     b.Cb     o.Co     a.Ca      b.Cb      o.Co      a.Ca 
+0.99460000 3.283723 1.634422 1.103086 1.6331731 0.5439908 0.1211162 
+> unlist(c(N=sum(select)/length(select),VC.sd,VC.mean))
+         N       b.Cb       o.Co       a.Ca       b.Cb       o.Co       a.Ca 
+0.98372760 2.48951925 1.14577691 0.81438928 1.44499168 0.46160402 0.09477557 
+> unlist(c(N=sum(select)/length(select),VC.sd,VC.mean))
+         N       b.Cb       o.Co       a.Ca       b.Cb       o.Co       a.Ca 
+0.97542328 2.21426015 0.99188466 0.72178601 1.35778653 0.42485241 0.08280087 
+> unlist(c(N=sum(select)/length(select),VC.sd,VC.mean))
+         N       b.Cb       o.Co       a.Ca       b.Cb       o.Co       a.Ca 
+0.97087103 2.10336685 0.93364792 0.68521678 1.31881586 0.40932639 0.07798936 
+> unlist(c(N=sum(select)/length(select),VC.sd,VC.mean))
+         N       b.Cb       o.Co       a.Ca       b.Cb       o.Co       a.Ca 
+0.96868736 2.05474365 0.91041204 0.66989799 1.30106489 0.40281338 0.07591291 
+> unlist(c(N=sum(select)/length(select),VC.sd,VC.mean))
+        N      b.Cb      o.Co      a.Ca      b.Cb      o.Co      a.Ca 
+0.9676786 2.0335485 0.9004630 0.6633409 1.2931712 0.3999754 0.0750133 
+> unlist(c(N=sum(select)/length(select),VC.sd,VC.mean))
+         N       b.Cb       o.Co       a.Ca       b.Cb       o.Co       a.Ca 
+0.96723840 2.02428505 0.89611595 0.66047704 1.28972753 0.39872787 0.07460801 
+
+select   42.375 1222254  1215602        0.54
+select   42.375 1222254  1202365        1.63
+select   42.375 1222254  1192215        2.46
+select   42.375 1222254  1186651        2.91
+select   42.375 1222254  1183982        3.13
+select   42.375 1222254  1182749        3.23
+select   42.375 1222254  1182211        3.28
+select   42.375 1222254  1179609        3.49
+
+> qcit<-matrix(scan('/Users/rhoffman/vam/R/VCQC-iterates.txt',skip=1),ncol=7,byrow=T)
+> qcit
+          [,1]      [,2]      [,3]     [,4]      [,5]       [,6]    [,7]
+ [1,] 6.699912 4.0368980 2.4410010 1.939295 0.6923528 0.17053730 1215602
+ [2,] 3.283723 1.6344220 1.1030860 1.633173 0.5439908 0.12111620 1202365
+ [3,] 2.489519 1.1457769 0.8143893 1.444992 0.4616040 0.09477557 1192215
+ [4,] 2.214260 0.9918847 0.7217860 1.357787 0.4248524 0.08280087 1186651
+ [5,] 2.103367 0.9336479 0.6852168 1.318816 0.4093264 0.07798936 1183982
+ [6,] 2.054744 0.9104120 0.6698980 1.301065 0.4028134 0.07591291 1182749
+ [7,] 2.033549 0.9004630 0.6633409 1.293171 0.3999754 0.07501330 1182211
+ [8,] 2.024285 0.8961159 0.6604770 1.289728 0.3987279 0.07460801 1179609
+ [9,] 2.000000 0.9000000 0.6600000 1.300000 0.4000000 0.07500000 1179420
+> qcitprint<-round(cbind(qcit,100*(1-qcit[,7]/1222254)),digits=2)
+> qcitprint[,c(3,6)]<-round(qcit[,c(3,6)],digits=3)
+> qcitprint
+
+1 & 6.70 & 4.04 & 2.441 & 1.94 & 0.69 & 0.171 & 1215602 & 0.54
+2 & 3.28 & 1.63 & 1.103 & 1.63 & 0.54 & 0.121 & 1202365 & 1.63
+3 & 2.49 & 1.15 & 0.814 & 1.44 & 0.46 & 0.095 & 1192215 & 2.46
+4 & 2.21 & 0.99 & 0.722 & 1.36 & 0.42 & 0.083 & 1186651 & 2.91
+5 & 2.10 & 0.93 & 0.685 & 1.32 & 0.41 & 0.078 & 1183982 & 3.13
+6 & 2.05 & 0.91 & 0.670 & 1.30 & 0.40 & 0.076 & 1182749 & 3.23
+7 & 2.03 & 0.90 & 0.663 & 1.29 & 0.40 & 0.075 & 1182211 & 3.28
+8 & 2.02 & 0.90 & 0.660 & 1.29 & 0.40 & 0.075 & 1179609 & 3.49
+9 & 2.00 & 0.90 & 0.660 & 1.30 & 0.40 & 0.075 & 1179420 & 3.50
+
+> ############### End iterative trimming
+
+> ############### ECMWF Operational analysis winds vs. all data in 2001 from AtlHA+11, Fig. S3:
+
+> ecop<-rbind(Ships=c(370239,2.38,-0.96),Buoys=c(87666,2.09,-0.91),TAO=c(55497,1.42,-0.71))
+> dimnames(ecop)[[2]]<-c('N','RMS','Mean') ; dimnames(ecop)[[1]][3]<-'TAO Buoys'
+> ecop<-cbind(ecop,StdDev=sqrt(ecop[,'RMS']^2-ecop[,'Mean']^2))
+> ecop<-cbind(ecop,Bb=c(1.3,1.3,0.9))
+> ecop<-cbind(ecop,Error=sqrt(ecop[,'StdDev']^2-ecop[,'Bb']^2))
+> ecop<-cbind(ecop,ErrorRep=sqrt(ecop[,'Error']^2-(2/3)^2)) # remove representativeness error
+> # 2/3 m/s gives good fit to ccmp below; should be variability on scales in CCMP, not in ECMWF
+> round(ecop,digits=2)
+               N  RMS  Mean StdDev  Bb Error ErrorRep
+Ships     370239 2.38 -0.96   2.18 1.3  1.75     1.62
+Buoys      87666 2.09 -0.91   1.88 1.3  1.36     1.19
+TAO Buoys  55497 1.42 -0.71   1.23 0.9  0.84     0.51
+> ccmp<-rbind(Ships=c(370239,1.62,-0.26),Buoys=c(87666,1.29,-0.16),TAO=c(55497,0.57,-0.14))
+> dimnames(ccmp)[[2]]<-c('N','RMS','Mean') ; dimnames(ccmp)[[1]][3]<-'TAO Buoys'
+> ccmp<-cbind(ccmp,StdDev=sqrt(ccmp[,'RMS']^2-ccmp[,'Mean']^2))
+> ccmp<-cbind(ccmp,Ba=c(0.35,0.35,0.25))
+> ccmp<-cbind(ccmp,Error=sqrt(ccmp[,'StdDev']^2-ccmp[,'Ba']^2)) # no representativeness error; we overfit conv data
+> round(ccmp,digits=2)
+               N  RMS  Mean StdDev   Ba Error
+Ships     370239 1.62 -0.26   1.60 0.35  1.56
+Buoys      87666 1.29 -0.16   1.28 0.35  1.23
+TAO Buoys  55497 0.57 -0.14   0.55 0.25  0.49
+
+> ############### End: ECMWF Operational analysis winds vs. all data in 2001
+
+> ############### Figure 5 analysis
+
+> # Define basename and run.plot.superhist.... will save sh objects in the user environment for each plot.
+
+> plot(VCQC.all.vs.o$o$xbar,VCQC.all.vs.o$b$ybar/VCQC.all.vs.o$o$ybar,type='b')
+
+> super.hist.print(VCQC.all.vs.o)
+Sample size is 1179420 for VCQC.all.vs.o ::
+      ntrim          nb          nj outofbounds 
+          0           9           9           0 
+    0-2    2-4    4-6    6-8   8-10  10-12  12-16 16-20 20-Inf
+n 43128 141604 224574 234231 215418 158813 131532 27337   2783
+          0-2    2-4    4-6    6-8   8-10  10-12  12-16  16-20 20-Inf
+percent 3.657 12.006 19.041 19.860 18.265 13.465 11.152  2.318  0.236
+xbar    1.423  3.224  5.129  7.091  9.069 11.022 13.642 17.506 21.220
+b.ypd   1.227  1.276  1.324  1.323  1.347  1.382  1.488  2.161  2.946
+b.ybar  0.984  1.034  1.070  1.067  1.095  1.131  1.224  1.899  2.750
+b.ymd   0.658  0.713  0.734  0.726  0.765  0.804  0.884  1.594  2.538
+o.ypd   0.717  0.735  0.767  0.792  0.817  0.846  0.928  1.191  1.403
+o.ybar  0.560  0.556  0.578  0.598  0.622  0.644  0.712  0.936  1.119
+o.ymd   0.336  0.280  0.285  0.297  0.325  0.337  0.390  0.577  0.733
+a.ypd   0.507  0.492  0.500  0.501  0.522  0.542  0.569  0.818  1.095
+a.ybar  0.334  0.271  0.247  0.227  0.253  0.268  0.227  0.484  0.783
+a.ymd   0.000  0.000  0.000  0.000  0.000  0.000  0.000  0.000  0.162
+
+> super.hist.print(noQC.all.vs.o)
+    0-2    2-4    4-6    6-8   8-10  10-12  12-16 16-20 20-Inf
+n 43208 142361 226895 238344 220240 163355 139326 34961  13564
+> plot(noQC.all.vs.o$o$xbar,noQC.all.vs.o$b$ybar/noQC.all.vs.o$o$ybar,type='b')
+> round(100*(1-VCQC.all.vs.o$b$n/noQC.all.vs.o$o$n),digits=2)
+[1]  0.19  0.53  1.02  1.73  2.19  2.78  5.59 21.81 79.48
+> round(100*(VCQC.all.vs.o$o$n/sum(VCQC.all.vs.o$o$n)),digits=2)
+[1]  3.66 12.01 19.04 19.86 18.26 13.47 11.15  2.32  0.24
+> round(100*(noQC.all.vs.o$o$n/sum(noQC.all.vs.o$o$n)),digits=2)
+[1]  3.54 11.65 18.56 19.50 18.02 13.37 11.40  2.86  1.11
+
+> ls(pattern="\\.vs\\.")
+ [1] "VCQC.all.vs.a"        "VCQC.all.vs.amb"      "VCQC.all.vs.amb2"     "VCQC.all.vs.b"        "VCQC.all.vs.dt"       "VCQC.all.vs.gamma"   
+ [7] "VCQC.all.vs.lon"      "VCQC.all.vs.o"        "VCQC.all.vs.o.noQC"   "VCQC.all.vs.oma2"     "VCQC.all.vs.omb2"     "VCQC.all.vs.platform"
+[13] "VCQC.all.vs.time"     "noQC.all.vs.amb2"     "noQC.all.vs.o"        "noQC.all.vs.oma2"     "noQC.all.vs.omb2"    
+
+> ############### Figure 1 analysis
+
+> ds<-data.frame(n=noQC.all.vs.amb2$b$n,x=noQC.all.vs.amb2$b$xbar,b=noQC.all.vs.amb2$b$ybar,o=noQC.all.vs.amb2$o$ybar,a=noQC.all.vs.amb2$a$ybar)
+> ds<-data.frame(n=VCQC.all.vs.amb2$b$n,x=VCQC.all.vs.amb2$b$xbar,b=VCQC.all.vs.amb2$b$ybar,o=VCQC.all.vs.amb2$o$ybar,a=VCQC.all.vs.amb2$a$ybar)
+> modb<-lm(b~x-1,data=ds,weights=n)
+> modo<-lm(o~x-1,data=ds,weights=n)
+> moda<-lm(a~x-1,data=ds,weights=n)
+> slopes.noQC<-list(B=coef(modb),O=coef(modo),A=coef(moda))
+> summary(modb)
+> coef(modb)
+> unlist(slopes.noQC)
+      B.x       O.x       A.x 
+1.1052123 0.2905970 0.1052123 
+> unlist(slopes.VCQC)
+       B.x        O.x        A.x 
+1.04311579 0.13600322 0.04311579 
+> data.extract.sh<-function(sh) {data.frame(n=sh$b$n,x=sh$b$xbar,b=sh$b$ybar,o=sh$o$ybar,a=sh$a$ybar)}
+> slopes.0.sh<-function(sh) {ds<-data.extract.sh(sh);c(B=coef(lm(b~x-1,data=ds,weights=n)),O=coef(lm(o~x-1,data=ds,weights=n)),A=coef(lm(a~x-1,data=ds,weights=n)))}
+> slopes.incr2.noQC<-sapply(list(amb=noQC.all.vs.amb2,omb=noQC.all.vs.omb2,oma=noQC.all.vs.oma2),slopes.0.sh)
+> slopes.incr2.VCQC<-sapply(list(amb=VCQC.all.vs.amb2,omb=VCQC.all.vs.omb2,oma=VCQC.all.vs.oma2),slopes.0.sh)
+> rbind(slopes.incr2.noQC,slopes.incr2.VCQC)
+           amb       omb        oma
+B.x 1.10521234 0.7029666 1.53360879
+O.x 0.29059696 0.2970334 1.33971100
+A.x 0.10521234 0.1469324 0.33971100
+B.x 1.04311579 0.7661530 1.11724301
+O.x 0.13600322 0.2338470 1.07727584
+A.x 0.04311579 0.1271999 0.07727584
+
+> ################## Create table of results
+
+> bp.gamma.noQC<-boxplot.stats(gamma,do.conf=F,do.out=F)$stats # whisker, 1st quartile, median, 3rd quartile, whisker
+> bp.delta.noQC<-boxplot.stats(delta,do.conf=F,do.out=F)$stats
+..... Apply VCQC
+> bp.gamma.VCQC<-boxplot.stats(gamma,do.conf=F,do.out=F)$stats
+> bp.delta.VCQC<-boxplot.stats(delta,do.conf=F,do.out=F)$stats
+> bp<-rbind(bp.gamma.noQC,bp.gamma.VCQC,bp.delta.noQC,bp.delta.VCQC)[,2:4]
+> dimnames(bp)[[2]]<-c('1st.quantile','median','3rd.quantile')
+> bp<-cbind(bp,'est.std.dev'=(bp[,3]-bp[,1])/diff(qnorm(c(1,3)/4)))
+> bp<-cbind(bp,B.naive=bp[,2],O.naive=(bp[,2]-1)*bp[,2]+bp[,4]^2,A.naive=bp[,2]-1)
+> bp[3:4,5:7]<-cbind(bp[3:4,2],1-bp[3:4,2],bp[3:4,2]*(1-bp[3:4,2])-bp[3:4,4]^2)
+> bp<-cbind(bp,B.lm0=1:4+10,O.lm0=1:4+20,A.lm0=1:4+30)
+> bp['bp.gamma.noQC',8:10]<-slopes.incr2.noQC[,1]
+> bp['bp.delta.noQC',8:10]<-slopes.incr2.noQC[,2]
+> bp['bp.gamma.VCQC',8:10]<-slopes.incr2.VCQC[,1]
+> bp['bp.delta.VCQC',8:10]<-slopes.incr2.VCQC[,2]
+> calc.std.dev<-rep(NA,4)
+> calc.std.dev<-sqrt(bp[1:2,9]-(bp[1:2,2]-1)*bp[1:2,2])
+> calc.std.dev[3:4]<-sqrt(bp[3:4,2]*(1-bp[3:4,2])-bp[3:4,10])
+> bp<-cbind(bp,calc.std.dev)
+> round(bp,digits=2)
+              1st.quantile median 3rd.quantile est.std.dev B.naive O.naive A.naive B.lm0 O.lm0 A.lm0
+bp.gamma.noQC         0.61   1.08         1.55        0.70    1.08    0.58    0.08  1.11  0.29  0.11
+bp.gamma.VCQC         0.60   1.07         1.54        0.70    1.07    0.56    0.07  1.04  0.14  0.04
+bp.delta.noQC         0.43   0.78         1.11        0.50    0.78    0.22   -0.08  0.70  0.30  0.15
+bp.delta.VCQC         0.43   0.78         1.11        0.51    0.78    0.22   -0.09  0.77  0.23  0.13
+
+> ##################### Effect of dt
+
+> ds<-data.extract.sh(VCQC.all.vs.absdt)
+> modb1<-lm(I(b-1)~I(abs(x)),data=ds,w=n)
+> modo1<-lm(o~I(abs(x)),data=ds,w=n)
+> moda1<-lm(a~I(abs(x)),data=ds,w=n)
+> slopes.dt.VCQC<-c(B=coef(modb1),O=coef(modo1),A=coef(moda1))
+> plot(c(0,180),range(c(ds$b-1,ds$o,ds$a)),type='n',xlab='dt',ylab='sqrt(Cx)')
+> points(abs(ds$x),ds$b-1,pch=17,col=line.col[1])
+> points(abs(ds$x),ds$o,pch=17,col=line.col[2])
+> points(abs(ds$x),ds$a,pch=17,col=line.col[3])
+> lines(abs(ds$x),modb1$fitted.values,col=line.col[1])
+> lines(abs(ds$x),modo1$fitted.values,col=line.col[2])
+> lines(abs(ds$x),moda1$fitted.values,col=line.col[3])
+> legend('topleft',c('B-1','O','A'),col=line.col,pch=17,lty=1,lwd=2,bg='white')
+> hilow.dt.VCQC<-slopes.dt.VCQC
+> hilow.dt.VCQC[c(2,4,6)]<-slopes.dt.VCQC[c(1,3,5)] + 180*slopes.dt.VCQC[c(2,4,6)]
+> slopes.dt.VCQC
+B.(Intercept)   B.I(abs(x)) O.(Intercept)   O.I(abs(x)) A.(Intercept)   A.I(abs(x)) 
+ 2.759944e-01 -8.938659e-05  2.818528e-01  1.143665e-03  7.035880e-02 -1.700030e-05 
+> hilow.dt.VCQC
+B.(Intercept)   B.I(abs(x)) O.(Intercept)   O.I(abs(x)) A.(Intercept)   A.I(abs(x)) 
+   0.27599436    0.25990477    0.28185280    0.48771253    0.07035880    0.06729874 
+> sqrt(hilow.dt.VCQC)
+B.(Intercept)   B.I(abs(x)) O.(Intercept)   O.I(abs(x)) A.(Intercept)   A.I(abs(x)) 
+    0.5253517     0.5098086     0.5308981     0.6983642     0.2652523     0.2594200 
+> sqrt(diff(hilow.dt.VCQC[3:4])) # std dev of FGAT error at t=180
+  0.4537177 
+
+> ds[,3:5]<-sqrt(ds[,3:5]) # to analyze stdev
+> slopes.dt.VCQC
+B.(Intercept)   B.I(abs(x)) O.(Intercept)   O.I(abs(x)) A.(Intercept)   A.I(abs(x)) 
+ 1.295540e-01 -3.950558e-05  5.348995e-01  9.281272e-04  2.648458e-01 -3.165985e-05 
+> hilow.dt.VCQC
+B.(Intercept)   B.I(abs(x)) O.(Intercept)   O.I(abs(x)) A.(Intercept)   A.I(abs(x)) 
+    0.1295540     0.1224430     0.5348995     0.7019624     0.2648458     0.2591471 
+> sqrt(diff(hilow.dt.VCQC[3:4]^2)) # std dev of FGAT error at t=180
+  0.4545698 
+
+> ################### Pacific close up
+
+> pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+> breaks=seq(125,225,5) ; histo=T
+> source('/Users/rhoffman/vam/R/plot.pacific.q')
+> breaks=seq(125,225,1) ; histo=F
+> source('/Users/rhoffman/vam/R/plot.pacific.q')
+> breaks=seq(125,225,0.25) ; histo=F
+> source('/Users/rhoffman/vam/R/plot.pacific.q')
+> dev.off()
+> system("mv gamma.pdf sdev.VC.42.375N.pacific.bins.pdf")
+
+> ################### SSM/I comparisons vs dt
+
+> sdev=T ; nsd=1/3
+> main<-paste('B, O, A error st. dev., ', lat.nameNS, ', f13 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> pdf('gamma.pdf',width=8,height=10,onefile=T,title='gamma plot')
+> basename<-'VCQC.f13'
+> select<-select.data &  all.data[,'platform']==2
+> source('/Users/rhoffman/vam/R/run.plot.superhist.absdt.q')
+> main<-paste('B, O, A error st. dev., ', lat.nameNS, ', f14 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> basename<-'VCQC.f14'
+> select<-select.data &  all.data[,'platform']==3
+> source('/Users/rhoffman/vam/R/run.plot.superhist.absdt.q')
+> main<-paste('B, O, A error st. dev., ', lat.nameNS, ', f15 2004 data, VC QC, +/- 1/3 sdev',sep='')
+> basename<-'VCQC.f15'
+> select<-select.data &  all.data[,'platform']==4
+> source('/Users/rhoffman/vam/R/run.plot.superhist.absdt.q')
+> dev.off()
+
+> mean.sh.x<-function(sh,n=sh$b$n,x=sh$b$xbar){sum(n*x)/sum(n)}
+> unlist(lapply(list(f13=VCQC.f13.vs.absdt,f14=VCQC.f14.vs.absdt,f15=VCQC.f15.vs.absdt),mean.sh.x))
+      f13       f14       f15 
+100.61621  96.95750  80.01972 
+> unlist(lapply(list(f13=VCQC.f13.vs.o,f14=VCQC.f14.vs.o,f15=VCQC.f15.vs.o),mean.sh.x))
+     f13      f14      f15 
+7.960402 7.840203 7.858764 

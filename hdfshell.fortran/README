@@ -1,0 +1,82 @@
+######################################################################
+# WARNING: !!!!!!!!!!!!!!!!!!!!!!
+#####################################################################
+
+These program require a version 4.0 release 2 of HDF, and its given
+libraries.
+
+The software has been tested on SGI and SUN Solaris.  If you are using 
+any other operating system, please use at your own risk.
+
+#####################################################################
+# NOTE: !!!!!!!!!!!!!!!!!!!!!!!!!
+#####################################################################
+
+Please check the ftp site for updated software and makefile versions:
+
+To Come: 
+	Makefile for HP
+        Makefile for SUN OS
+
+	Straight HDF readers (without need to use the nscatshell.a 
+	library both in C and FORTRAN.
+    
+
+#####################################################################
+# READ: !!!!!!!!!!!!!!!!!!!!!!!!!
+#####################################################################
+
+1.	You must have a version 4.0 release 2 of HDF installed in
+	a known directory in order to be able to run this programs
+
+	You need to be able to run ansi C
+
+2.	This directory contains the following:
+
+        	file		README
+		file		Makefile
+		directory	hdfshell
+		directory	readers
+		directory	dumpers
+
+3.	This Makefile is the top makefile.  You need to edit this file 
+	and follow the directions to change the path for the following 
+	directories:
+
+   		HDFDIR			(change this path)
+   		HDFINC			(change this path)
+
+	HDFDIR and HDFINC need to reflect your own HDF environment.  
+
+
+4.	In order to compile and be able to use these functions type
+	the following:
+ 
+		make -f Makefile.###
+
+        where ### can be sgi or sun depending on whether you are
+        compiling on an sgi or a solaris 
+
+5.	If you have installed the correct version of HDF, and you
+	have followed the directions typing the above commmand
+        will compile all the programs on this tree.
+
+6. 	You would not need to change the individual Makefiles of
+	each subdirectory, all you need to change is the Makefile
+        in this directory. 
+
+7.	The readers expect to have the nscatshell.a library
+        this one will be created when you succesfully execute
+ 	the above command.  This library is located in
+	./hdfshell/lib
+
+8.	The Makefiles in each of the subdirectories expect that
+	you compile succesfully this top Makefile.
+
+9.	If you would like to compile each file or each subdirectory
+	separetely you will need to write your own makefiles to
+        do so.
+
+10.	Remember to clean you directories by:
+
+		make -f Makefile.### clean

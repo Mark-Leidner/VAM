@@ -1,0 +1,346 @@
+%x Emacs: -*- mode:outline; outline-regexp:"[%\\\\]x+ " -*-
+%  RCS: $Id: fgat-accuracy-estimation.tex,v 1.1 2009/10/03 04:13:01 rnh Exp $
+%  Copy of RCS: Id: progress-Aug04.tex,v 1.4 2004/09/29 15:18:05 rnh Exp
+%  p1219 progress report as of the end of August 2004.
+
+\documentclass[12pt,titlepage]{article}
+\usepackage{times}
+\usepackage[dvips]{color}
+\input{format}
+\input{abbrev}
+
+ % This is needed to bring in ametsoc.sty and use ametsoc.bst
+ \usepackage{ametsoc}
+ %\usepackage[final]{ametsoc}
+ %\usepackage[conf]{ametsoc}
+
+\newcommand{\Chapter}[1]{document {\tt #1}}
+\newcommand{\Appendix}[1]{document {\tt #1}}
+\newcommand{\startAppendixes}{\appendix}
+\newcommand{\tabhead}[1]{{\bf #1}}
+
+\newcommand{\authors}{Ross N. Hoffman}
+\newcommand{\RCSid}{$Id: fgat-accuracy-estimation.tex,v 1.1 2009/10/03 04:13:01 rnh Exp $}
+\newcommand{\RCSrevision}{$Revision: 1.1 $}
+\newcommand{\support}{\thanks{ 
+        Supported by SAIC contract 4400125404, a subcontract to 
+	NASA contract NAS5-nnnnn.
+        AER, Inc. intends to retain % (has retained)
+        patent rights to certain aspects of the algorithms described herein
+        under FAR 52.227-11.}}
+\newcommand{\docinfo}{\thanks{ 
+        To be submitted to Goddard Space Flight Center (NASA/GSFC),
+        Greenbelt, MD 20771.}}
+\newcommand{\rightsinfo}[1]{\thanks{ 
+        Copyright \copyright\ #1.  
+        Work in Progress.  All Rights Reserved.}}
+\newcommand{\aerinfo}{\thanks{
+        Atmospheric and Environmental Research (AER), Inc.
+        131 Hartwell Avenue, Lexington, MA 02421-3126.
+        Phone: (781)-761-2288   FAX: (781)-761-2299
+        Net: \computer{http://www.aer.com/}.}}
+\newcommand{\revinfo}[1]{\thanks{
+        AER document version control: \computer{P1326, #1}.
+        Formatting version \computer{$Id: fgat-accuracy-estimation.tex,v 1.1 2009/10/03 04:13:01 rnh Exp $}.}}
+\newcommand{\xtitle}[4]{
+        \title{Support for the Development of Cross-Calibrated, \\
+               Multi-Platform Ocean Surface Wind Products
+% For delivery modify \docinfo and eliminate \rightsinfo
+        #1$\!\!$\docinfo} 
+        \author{#2\rightsinfo{#2} \\
+        Atmospheric and Environmental Research, Inc.\aerinfo }
+        \date{#3\revinfo{#4} \\~\\ \today}
+        \maketitle
+        \markboth {AER, Inc.\ NASA FGAT for the VAM}
+        {#1 (#3)}
+        \begin{titlepage} \mbox{~} \end{titlepage}
+}
+
+\newcommand{\x}[1]{\xtitle{#1}{\authors}{\RCSrevision}{\RCSid}}
+
+\begin{document}
+
+\x {}
+
+\xx {Introduction}
+
+ This is a technical report in AER's support of the generation of
+cross-calibrated, multi-platform (CCMP) ocean surface wind products at
+NASA Goddard.
+ The project at NASA Goddard aims to generate high-quality,
+high-resolution, vector winds over the world's oceans beginning with
+the 1987 launch of the SSM/I F08, and using both {\em in situ} and remotely
+sensed wind observations.
+
+In this project AER is helping specifically by enhancing the capability and
+optimizing the use of a two-dimensional data assimilation application
+for surface winds called the variational analysis method (VAM).
+ The VAM is at the center of the project's analysis procedures for
+combining observations of the wind over the world's oceans.
+
+This report summarizes an approach to provide uncertainty estimates
+for the VAM analyses.
+To obtain these estimates we will approximate the VAM as a least
+squares weighted average of $n$ independent observations, treating the
+background as an observation and ignoring the small amount of
+conventional data.
+This approach is applicable most directly to estimating the accuracy
+of wind speed.
+Extensions to direction, wind components, and pseudo-stress components
+are discussed.
+
+\xx {Error standard deviation, error variance, and accuracy\secl{Lei81b}}
+
+\citet{Lei81b} defines accuracy, $A$, as the inverse of error variance,
+$E$, where $E$ is the square of the standard deviation, $s$. That is,
+\eql{A}{A=1/E, \qquad\mbox{and}}
+\eql{E}{E=s^2.}
+
+For independent error source the error variances add. That is, if a
+measurement is subject to error sources 1, 2, 3, and we can estimate
+the associated error variances $E_1, E_2, E_3$, then the total error
+variance is given by 
+\eql{sumE}{E = E_1 + E_2 + E_3.}
+
+For observations with independent errors, the accuracies add. That is
+if we have three observations of the $u$-component wind at a specific
+time and location with associated error variances $E_1, E_2, E_3$ then
+if these observations are unbiased and combined with optimal weights
+(\ie, least squares weights) then the accuracy of the weighted average is
+\eql{sumA}{A = A_1 + A_2 + A_3 = E_1^{-1} + E_2^{-1} + E_3^{-1} =
+E^{-1}.}
+
+The optimal weights sum to one and the $i$th weight is proportional to
+$A_i$. In the case of combining two observations,
+\eql{combine2}{X = w_1 X_1 + w_2 X_2,}
+we have,
+\eql{weight}{w_1=\frac{A_1}{A_1+A_2} \qquad\mbox{and}\qquad
+w_2=\frac{A_2}{A_1+A_2}.}
+
+These results for accuracy are strictly true if the observations
+are unbiased, independent, and combined with an optimally weighted
+averaging process.
+Leith extends the analysis for vector quantities with $E$ the error
+covariance matrix and $A$ the inverse of $E$.
+Initially we will consider only the accuracy of the speed.
+But the extension to 2-component vector quanitities might be useful in
+treating speed and direction together, or for wind components or for
+pseudo-stress components.
+
+\xx {Estimating the VAM accuracies}
+
+In the CCMP, the observations and VAM analyses are both on the same
+\degrees{1/4} Wentz grid and the ECMWF backgrounds can be interpolated
+to that grid.
+Thus we can easily calculate and/or accumulate statistics on the
+analysis grid.
+Here we ignore the fact that the VAM makes use of neighboring data.
+This assumption is valid inside swaths of satellite data which have
+spatially correlated observation errors, but would have to be
+revisited if we wished to include the conventional data in our
+accuracy computation.
+
+\xxx {Accuracy of individual VAM analyses}
+
+We wish to apply \eqr{sumA} at each analysis time and each grid point,
+but with \eqr{sumA} extended from 3 pieces of information to $1 + n$
+pieces of information, where $n$ is the number of satellite
+observations used at the particular analysis time and grid point.
+
+This estimation will be done for wind speed initially, but might be
+extended to wind components, speed,
+direction, and pseudo-stress components separately or pairwise.
+We need accuracy estimates for speed and eventually the other wind
+quantities for each instrument used and for the background.
+Each accuracy estimate, except for the background, should be modified
+to account for the time difference from the analysis time following,
+the FGAT procedure.
+
+We claim that this processs will underestimate the VAM analysis
+accuracy because the VAM includes other information in the form of
+constraints, conventional data, and neighboring satellite observations.
+
+\xxx {Accuracy of time averages of VAM analyses}
+
+Accuracies continue to add if we form optimally weighted averages of
+the VAM analyses.
+However we will generally form simple averages of the VAM analyses
+that correspond to time averages.
+If the errors are independent, and we average over $N$ VAM analyses
+then applying \eqr{sumE} and dividing by $N$, we have that the error
+of the time average is given by
+\eql{time-average}{E=\frac{1}{N}\sum_{i=1}^{N}E_i =
+\frac{1}{N}\sum_{i=1}^{N} \frac{1}{A_i} = A^{-1}.}
+
+\xx {Error standard deviation estimates\secl{sdev}}
+
+To estimate the VAM analysis accuracy we need estimates of the
+estimated error standard deviations of speed for each observation.
+These estimates should be consistent with the weights used in the
+VAM, including the FGAT modification.
+We have assumed that measurement errors are small, with 
+\ms{s_u=s_v=1} and that \ms{s_w=0.7} where the
+subscripts $u, v, w$ are for the two wind components and wind speed.
+NB: because of the subjectivity in these assignments and the tuning of
+the $\lambda$-weights I think we must tune the values of $s_w$ for the
+background.
+We might try first with applying/tuning this approach to a recent year
+in which we withhold both conventional and scatterometer data.
+
+The FGAT modification is provided in the Appendix (\secr{Jnew}).
+The FGAT error variance, given by \eqr{sfgat} with \ms{s_3=1}, is then
+added to the measurement error variance to give the observational
+error variance.
+
+For direction and other quantities we must recognize that the
+microwave radiometers are not supplying independent directional
+information.
+The VAM does extract some directional information by combining the
+speed observations with the smoothing and dynamical constraints, but
+we can not treat this here.
+When scatterometer data are not available this would imply that the
+wind directional accuracy comes only from the ECMWF backgroun.
+
+To extend to 2-component vector quantities---speed and direction, wind components or
+pseudo-stress components---will require additional work.
+A faithful probability distribution function for the errors of an
+instrument observing the wind should allow the evaluation of the
+$2\times2$ matrix $E$ for any one of these pairs.
+
+\xx {Consistency verification: Application to collocation statistics}
+
+Underlying the approach presented here to estimating the VAM
+accuracies are estimates of the observation and background error
+standard deviations.
+Comparing actual collocations statistics to estimates of the rms
+collocation differences based on the method of \secr{Lei81b} and the data of
+\secr{sdev} provides a verification and opportunity to tune the error
+standard deviations.
+We typically calculate the mean (or bias) and rms difference for
+collocations.
+In what follows we assume the bias has been removed or is small enough
+to ignore.
+
+\xxx {Observation -- Background ($O-B$) differences} 
+
+Whether adding or subtracting two independent error sources, the error
+variances add.
+To demonstrate this assume the observation and background errors are
+independent.
+Then we have
+\eql{OMB}{E_d = <(X_o - X_b)^2> = <(e_o - e_b)^2> = E_o + E_b.}
+Here $E_d$, $E_o$, and $E_b$ are the error variances of the
+difference, observation, and background, respectively, and $<X>$ is
+the expectation of $X$.
+In \eqr{OMB} we first subtract and add the truth ($X_t$) to the
+difference between observation and background ($X_o - X_b$), to get
+the difference of the errors of the observation the background ($e_o -
+e_b$) since $e_o = X_o - X_t$ and $e_b = X_b - X_t$, and then make use
+of the fact that these two errors are uncorrelated.
+In terms of observation and background accuracies ($A_o$ and $A_b$) we
+can rewrite $E_d$ as 
+\eql{OMB-Accuracy}{E_d = A_o^{-1} + A_b^{-1} =  A_d^{-1}.}
+This formulation would also apply to comparisons of an analysis to a
+data set not used in that analysis.
+
+\xxx {Observation -- Analysis ($O-A$) differences} 
+
+To compare the VAM analysis (denoted $X$) to one data source
+(denoted $X_1$) used in the analysis we consider the analysis to be
+the optimally weighted sum of an analysis that uses all other data
+sources (denoted $X_2$) and the one data source collocated with the
+VAM analysis.
+Note that we do not actually need to calculate $X_2$ or $A_2$.
+A special case occurs when $X_1$ is the ECMWF background, in which case the
+collocation statistics are for the $B-A$ differences.
+
+Making use of \eqr{combine2}, noting that $w_1 + w_2 = 1$, we have
+\eql{OMA}{\begin{array}{rcl}E_d & = & <(X_1 - X)^2> = <(X_1 - [w_1 X_1 + w_2 X_2])^2> \\
+              & = & w_2^2 <(X_1 - X_2)^2> = w_2^2 <(e_1 - e_2)^2>
+              = w_2^2 (E_1 + E_2).\end{array}}
+In \eqr{OMA} we add and subtract the truth as in the derivation of \eqr{OMB} and make
+use of the fact that the errors ($e_1$ and $e_2$) of $X_1$ and $X_2$
+are independent.
+In terms of observation and analysis accuracies ($A_1$ and $A$) we
+can rewrite $E_d$ as 
+\eql{OMA-Accuracy}{E_d = \frac{A_2^2}{(A_1 + A_2)^2}\left(\frac{1}{A_1} +
+\frac{1}{A_2}\right) = A_1^{-1} - A^{-1} = E_1 - E,}
+making use of \eqr{weight} and \eqr{sumA} (\ie, $A_2=A-A-1$), and
+where in the final step we have rewritten our answer in terms of error variances. 	
+
+\appendix
+
+\xx {Accommodating FGAT errors in the VAM\secl{Jnew}}
+
+  \renewcommand{\vardef}[3]{$ {#1} $ is the {#2}}
+  \newcommand{\Obs}{Observation}
+  \newcommand{\obs}{observation}
+
+According to \citet{HofLH+03} the \obs\ function is given by the sum of
+squared differences between simulated (\ie, calculated from the
+analysis) and data values normalized by the estimated \obs\ (and
+representativeness) error(s).
+ For example, for conventional data,
+ \eql{Jconv}{ \Jm{CONV} = \sum \frac{(u_a - u_o)^2}{s_u^2} +
+ \frac{(v_a - v_o)^2}{s_u^2} . }
+ Here
+ \vardef{(u_a, v_a)}{analyzed wind interpolated to the \obs\
+locations,}{m s^{-1}}
+ \vardef{(u_o, v_o)}{observed wind, and}{m s^{-1}}
+ \vardef{s_u}{wind component error standard deviation.}{m s^{-1}}
+
+In this formulation $s_u$ implicitly accounts for observation error,
+representativeness errors, and interpolation errors.
+When using FGAT, the FGAT time interpolation errors vary significantly
+from observation to observation, so off time observations should be
+given lower weights by inflating the observation error standard
+deviation.
+Assuming the FGAT time interpolation errors are uncorrelated with the
+observational errors already included in $s_u$ we can account for
+these errors simply by replacing $s_u^2$ in \eqr{Jconv} with $s_u^2 +
+s_{FGAT}^2$. 
+
+In the VAM $s_u$ is taken to be a constant \mks{1}{m s^{-1}} and
+knowledge of the \obs\ error standard deviation is absorbed into
+\glm{CONV}.
+If we consider just one term from \eqr{Jconv}, the \computer{FORTRAN}
+code looks like
+\eql{Jold}{ \Jm{OLD} = \glm{CODE} (u_a - u_o)^2 ,}
+where $\lambda = s_u^2 \glm{CODE}$.
+Therefore we will modify each similar term to be
+\eql{Jnew1}{ \Jm{NEW} = \lambda \frac{(u_a - u_o)^2}{s_u^2 +
+s_{FGAT}^2} = \glm{CODE} \frac{(u_a - u_o)^2}{1+(s_{FGAT}/s_u)^2} ,}
+or
+\eql{Jnew}{ \Jm{NEW} = \glm{CODE} (u_a - u_o)^2/V_{\gamma},}
+where $V_{\gamma}$ is the variance inflation factor.
+
+It is clear from our earlier results that rms errors of ocean
+surface wind speed and components have a nearly parabolic shape when
+plotted as a function of time between $t_0$ and $t_1$.
+Therefore we can model the FGAT time interpolation error standard
+deviation as
+ \eql{sfgat}{s_{FGAT} = s_3\left\{1 - \left(1 - \frac{|t|}{(\delta t/2)}\right)^2\right\} . }
+Here, as before, $t$ is time and $\delta t$ is the time between
+analysis times.
+Also $s_3$ is the maximum value of the FGAT error that occurs at an
+offset of 3 hours.
+Based on \eqr{sfgat} we then have
+\eql{vinf}{V_{\gamma} = 1 + \left[\frac{s_3}{s_u}
+\left\{1 - \left(1 - \frac{|t|}{(\delta t/2)}\right)^2\right\}\right] .}
+
+Since $s_3$ varies quite a bit from synoptic situation to synoptic
+situation and it would be difficult to quantify this variability and
+since this variability dwarfs other variabilities, we will henceforth
+approximate \ms{s_3=1}.
+It remains to estimate $s_u$.
+Typical values of $s_u$ for wind components are 1 to \ms{2} and for
+wind speed from 0.7 to \ms{1.5}.
+Since we are using large $\lambda$ values to closely fit the data we
+are essentially assuming that $s_u$ values are small and we will
+choose to use values at the low end of the quoted ranges in accounting
+for FGAT interpolation errors.
+
+\bibliography{ams-abbrev,current,nwp,question}
+\bibliographystyle{ametsoc}
+
+\end{document}
