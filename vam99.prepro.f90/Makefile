@@ -1,7 +1,7 @@
 #Fortran options
 FFLAGS =  -O3 -I$(MAIN_DIR) -I$(GRIB_DIR)  #NOTE: recursively expanded variables
-F90 = f90
-F77 = f77
+F90 = gfortran
+F77 = gfortran
 LDFLAGS =
 
 ifeq ($(strip $(MAIN_DIR)),)	#Default values if not provided from environment
